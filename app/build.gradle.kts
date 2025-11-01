@@ -56,4 +56,8 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    // Coil - Para cargar imágenes desde URI
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    // Version extendida de icons
+    implementation("androidx.compose.material:material-icons-extended")
 }

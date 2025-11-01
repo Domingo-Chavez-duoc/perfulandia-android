@@ -2,10 +2,18 @@ package com.domichav.perfulandia.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+/*
+*Modificamos paletas de color para que coincidan con la guia de camara
+ */
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Paleta clara
+val Primary = Color(0xFF4F46E5)           // Índigo
+val Surface = Color(0xFFFFFFFF)           // Fondo de superficies
+val Foreground = Color(0xFF111827)        // Texto principal
+val ForegroundMuted = Color(0xFF6B7280)   // Texto secundario / muted
+
+// Paleta oscura
+val PrimaryDark = Primary
+val SurfaceDark = Color(0xFF111827)
+val ForegroundDark = Color(0xFFF9FAFB)
+val ForegroundMutedDark = Color(0xFF9CA3AF)
