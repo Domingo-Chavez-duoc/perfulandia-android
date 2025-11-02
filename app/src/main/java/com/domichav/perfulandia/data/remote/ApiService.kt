@@ -21,6 +21,13 @@ interface ApiService {
     suspend fun login(@Body request: LoginRequest): LoginResponse
 
     /**
+     * 📝 REGISTRO - Crear un nuevo usuario
+     * POST /users/add
+     */
+    @POST("users/add")
+    suspend fun register(@Body request: RegisterRequest): UserDto
+
+    /**
      * 👤 OBTENER USUARIO ACTUAL (requiere autenticación)
      * GET /user/me
      *

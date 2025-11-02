@@ -1,8 +1,9 @@
-package com.example.actividad_2_5_2.repository  // ⚠️ Cambia esto por tu paquete
+package com.example.actividad_2_5_2.repository
 
 import android.content.Context
 import com.domichav.perfulandia.data.remote.ApiService
 import com.domichav.perfulandia.data.remote.RetrofitClient
+import com.domichav.perfulandia.data.remote.dto.RegisterRequest
 import com.domichav.perfulandia.data.remote.dto.UserDto
 
 /**
@@ -11,7 +12,6 @@ import com.domichav.perfulandia.data.remote.dto.UserDto
  */
 class UserRepository(context: Context) {
 
-    // Crear la instancia del API Service (pasando el contexto)
     private val apiService: ApiService = RetrofitClient
         .create(context)
         .create(ApiService::class.java)
@@ -23,14 +23,21 @@ class UserRepository(context: Context) {
      */
     suspend fun fetchUser(id: Int = 1): Result<UserDto> {
         return try {
-            // Llamar a la API (esto puede tardar varios segundos)
             val user = apiService.getUserById(id)
-
-            // Retornar éxito
             Result.success(user)
-
         } catch (e: Exception) {
-            // Si algo falla (sin internet, timeout, etc.)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Registra un nuevo usuario en la API
+     */
+    suspend fun register(request: RegisterRequest): Result<UserDto> {
+        return try {
+            val newUser = apiService.register(request)
+            Result.success(newUser)
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }

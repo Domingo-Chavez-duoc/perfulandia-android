@@ -1,13 +1,29 @@
 package com.domichav.perfulandia.ui.screens  // ⚠️ Cambia esto por tu paquete
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.domichav.perfulandia.viewmodel.ProfileUiState
 import com.domichav.perfulandia.viewmodel.ProfileViewModel
 
 @Composable
@@ -22,6 +38,17 @@ fun ProfileScreen(
         viewModel.loadUser(1)  // ⚠️ Cambia el ID según necesites
     }
 
+    ProfileScreenContent(
+        state = state,
+        onRefresh = { viewModel.loadUser(1) }
+    )
+}
+
+@Composable
+fun ProfileScreenContent(
+    state: ProfileUiState,
+    onRefresh: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -48,12 +75,12 @@ fun ProfileScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = state.error ?: "",
+                        text = state.error,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { viewModel.loadUser(1) }) {
+                    Button(onClick = onRefresh) {
                         Text("Reintentar")
                     }
                 }
@@ -111,11 +138,44 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Button(onClick = { viewModel.loadUser(1) }) {
+                    Button(onClick = onRefresh) {
                         Text("Refrescar")
                     }
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "Loaded State")
+@Composable
+fun ProfileScreenPreview() {
+    MaterialTheme {
+        ProfileScreenContent(
+            state = ProfileUiState(userName = "Usuario de Prueba", userEmail = "prueba@email.com"),
+            onRefresh = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Loading State")
+@Composable
+fun ProfileScreenPreview_Loading() {
+    MaterialTheme {
+        ProfileScreenContent(
+            state = ProfileUiState(isLoading = true),
+            onRefresh = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Error State")
+@Composable
+fun ProfileScreenPreview_Error() {
+    MaterialTheme {
+        ProfileScreenContent(
+            state = ProfileUiState(error = "No se pudo cargar el perfil"),
+            onRefresh = {}
+        )
     }
 }
