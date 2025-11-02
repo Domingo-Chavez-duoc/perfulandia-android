@@ -60,4 +60,30 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
     // Version extendida de icons
     implementation("androidx.compose.material:material-icons-extended")
+
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")
+    implementation("androidx.navigation:navigation-compose:2.9.5")
+
+
+    // ========================================
+    // NETWORKING - API REST
+    // ========================================
+
+    // OkHttp - Cliente HTTP
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Retrofit - Cliente REST
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+
+    // Coroutines (si no las tienes)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+
+    // DataStore - Para guardar tokens
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // Coil - Para cargar imágenes desde URLs (opcional)
+    //implementation("io.coil-kt:coil-compose:2.6.0")
 }

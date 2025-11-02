@@ -1,25 +1,21 @@
-package com.domichav.perfulandia.viewmodel
+package com.domichav.perfulandia.viewmodel  // ⚠️ Cambia esto por tu paquete
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.domichav.perfulandia.repository.UserRepository
+import com.example.actividad_2_5_2.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-
-//Camara
-import android.net.Uri
 
 /**
  * Estado de la UI
  */
 data class ProfileUiState(
-    val isLoading: Boolean = true,
-    val user: User? = null,
-    val error: String? = null,
-    val formattedCreatedAt: String = "",
-    val avatarUri: Uri? = null  // ✨ Nuevo campo
+    val isLoading: Boolean = false,
+    val userName: String = "",
+    val userEmail: String = "",
+    val error: String? = null
 )
 
 /**
@@ -28,38 +24,47 @@ data class ProfileUiState(
  */
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val dependencies = AppDependencies.getInstance(application)
-    private val userRepository = dependencies.userRepository
+    private val repository = UserRepository(application)
 
-    // ✨ Obtener AvatarRepository del contenedor
-    private val avatarRepository = dependencies.avatarRepository
-
+    // Estado PRIVADO (solo el ViewModel lo modifica)
     private val _uiState = MutableStateFlow(ProfileUiState())
-    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
-    init {
-        loadUserProfile()
-        loadSavedAvatar()  // ✨ Cargar avatar guardado al iniciar
-    }
-
-    // ✨ Nueva función: Cargar avatar desde DataStore
-    private fun loadSavedAvatar() {
-        viewModelScope.launch {
-            avatarRepository.getAvatarUri().collect { savedUri ->
-                _uiState.update { it.copy(avatarUri = savedUri) }
-            }
-        }
-    }
-
-    // ... resto del código ...
-}
+    // Estado PÚBLICO (la UI lo observa)
+    val uiState: StateFlow<ProfileUiState> = _uiState
 
     /**
-     * Actualiza la URI del avatar del usuario.
+     * Carga los datos del usuario desde la API
      */
-    fun updateAvatar(uri: Uri?) {
+    fun loadUser(id: Int = 1) {
+        // Indicar que está cargando
+        _uiState.value = _uiState.value.copy(
+            isLoading = true,
+            error = null
+        )
+
+        // Ejecutar en coroutine (no bloquea la UI)
         viewModelScope.launch {
-            avatarRepository.saveAvatarUri(uri)
-            // El estado se actualiza automáticamente vía Flow en loadSavedAvatar()
+            val result = repository.fetchUser(id)
+
+            // Actualizar el estado según el resultado
+            _uiState.value = result.fold(
+                onSuccess = { user ->
+                    // ✅ Éxito: mostrar datos
+                    _uiState.value.copy(
+                        isLoading = false,
+                        userName = user.username,
+                        userEmail = user.email ?: "Sin email",
+                        error = null
+                    )
+                },
+                onFailure = { exception ->
+                    // ❌ Error: mostrar mensaje
+                    _uiState.value.copy(
+                        isLoading = false,
+                        error = exception.localizedMessage ?: "Error desconocido"
+                    )
+                }
+            )
         }
     }
+}

@@ -26,3 +26,5 @@ private fun buildDependencies(application: Application): AppDependencies {
         avatarRepository = avatarRepository  // ✨ Agregar aquí
     )
 }
+
+// EEEEEEEEEEEEEEEEEEEEEEEEEEE CI (?)  O_o

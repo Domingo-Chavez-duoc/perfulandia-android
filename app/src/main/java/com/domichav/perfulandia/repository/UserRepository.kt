@@ -1,15 +1,14 @@
-package com.domichav.perfulandia.repository
+package com.example.actividad_2_5_2.repository  // ⚠️ Cambia esto por tu paquete
 
+import android.content.Context
 import com.domichav.perfulandia.data.remote.ApiService
 import com.domichav.perfulandia.data.remote.RetrofitClient
 import com.domichav.perfulandia.data.remote.dto.UserDto
-import android.content.Context
 
-
-//
-
-Repository: Abstrae la fuente de datos
-El ViewModel NO sabe si los datos vienen de API, base de datos local, etc.*/
+/**
+ * Repository: Abstrae la fuente de datos
+ * El ViewModel NO sabe si los datos vienen de API, base de datos local, etc.
+ */
 class UserRepository(context: Context) {
 
     // Crear la instancia del API Service (pasando el contexto)
@@ -17,12 +16,14 @@ class UserRepository(context: Context) {
         .create(context)
         .create(ApiService::class.java)
 
-    /
-
-    Obtiene un usuario de la API*
-    Usa Result<T> para manejar éxito/error de forma elegante*/
+    /**
+     * Obtiene un usuario de la API
+     *
+     * Usa Result<T> para manejar éxito/error de forma elegante
+     */
     suspend fun fetchUser(id: Int = 1): Result<UserDto> {
-        return try {// Llamar a la API (esto puede tardar varios segundos)
+        return try {
+            // Llamar a la API (esto puede tardar varios segundos)
             val user = apiService.getUserById(id)
 
             // Retornar éxito
