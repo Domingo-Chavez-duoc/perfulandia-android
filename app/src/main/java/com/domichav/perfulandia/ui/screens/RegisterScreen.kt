@@ -47,7 +47,19 @@ fun RegisterScreenContent(
 ) {
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var confirmEmail by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
+    val isFormValid by remember(username, email, confirmEmail, password, confirmPassword) {
+        mutableStateOf(
+            username.isNotBlank() &&
+                email.isNotBlank() &&
+                password.isNotBlank() &&
+                email == confirmEmail &&
+                password == confirmPassword
+        )
+    }
 
     Scaffold {
         Column(
@@ -77,14 +89,31 @@ fun RegisterScreenContent(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
+                    value = confirmEmail,
+                    onValueChange = { confirmEmail = it },
+                    label = { Text("Confirmar Email") },
+                    isError = email != confirmEmail && confirmEmail.isNotEmpty()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     label = { Text("Contraseña") },
                     visualTransformation = PasswordVisualTransformation()
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text("Confirmar Contraseña") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    isError = password != confirmPassword && confirmPassword.isNotEmpty()
+                )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Button(onClick = { onRegister(username, email, password) }) {
+                Button(onClick = { onRegister(username, email, password) }, enabled = isFormValid) {
                     Text("Registrarse")
                 }
 
@@ -125,6 +154,7 @@ fun RegisterScreenPreview_Error() {
     }
 }
 
+// ver si esto te puede redirecconar automáticamente al perfil creado
 @Preview(showBackground = true, name = "Success State")
 @Composable
 fun RegisterScreenPreview_Success() {
