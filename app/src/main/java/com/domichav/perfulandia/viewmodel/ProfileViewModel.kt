@@ -7,6 +7,8 @@ import com.example.actividad_2_5_2.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import android.net.Uri
+import kotlinx.coroutines.flow.update
 
 /**
  * Estado de la UI
@@ -15,7 +17,9 @@ data class ProfileUiState(
     val isLoading: Boolean = false,
     val userName: String = "",
     val userEmail: String = "",
-    val error: String? = null
+    val error: String? = null,
+    val avatarUri: Uri? = null,
+    val formattedCreatedAt: String = ""
 )
 
 /**
@@ -66,5 +70,11 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 }
             )
         }
+    }
+    /**
+     * Actualiza la URI del avatar del usuario.
+     */
+    fun updateAvatar(uri: Uri?) {
+        _uiState.update { it.copy(avatarUri = uri) }
     }
 }

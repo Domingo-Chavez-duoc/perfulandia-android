@@ -84,6 +84,8 @@ dependencies {
     // DataStore - Para guardar tokens
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
+    //rememberMultiplePermissionsState
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
     // Coil - Para cargar imágenes desde URLs (opcional)
     //implementation("io.coil-kt:coil-compose:2.6.0")
 }

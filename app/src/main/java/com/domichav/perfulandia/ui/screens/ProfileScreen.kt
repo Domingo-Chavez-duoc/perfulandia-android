@@ -25,6 +25,49 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.domichav.perfulandia.viewmodel.ProfileUiState
 import com.domichav.perfulandia.viewmodel.ProfileViewModel
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import android.content.Context
+import android.net.Uri
+import androidx.core.content.FileProvider
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+
+fun createImageUri(context: Context): Uri {
+    val file = File.createTempFile(
+        "JPEG_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}_",
+        ".jpg",
+        context.externalCacheDir
+    )
+    return FileProvider.getUriForFile(
+        context,
+        // ⚠️ IMPORTANTE: Debe coincidir con el authority de tu FileProvider en AndroidManifest.xml
+        "${context.packageName}.provider",
+        file
+    )
+}
 
 @Composable
 fun ProfileScreen(
@@ -43,12 +86,43 @@ fun ProfileScreen(
         onRefresh = { viewModel.loadUser(1) }
     )
 }
-
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ProfileScreenContent(
     state: ProfileUiState,
     onRefresh: () -> Unit
 ) {
+    // --- Lógica de la Cámara y Permisos ---
+    val context = LocalContext.current
+    val viewModel: ProfileViewModel = viewModel() // Para llamar a updateAvatar
+
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    // 1. Definir permisos según la versión de Android
+    val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        listOf(Manifest.permission.CAMERA, Manifest.permission.READ_MEDIA_IMAGES)
+    } else {
+        listOf(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE)
+    }
+    val permissionsState = rememberMultiplePermissionsState(permissions)
+
+    // 2. Launcher para tomar foto con la cámara
+    val takePictureLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            tempCameraUri?.let { viewModel.updateAvatar(it) }
+        }
+    }
+
+    // 3. Launcher para seleccionar desde la galería
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.updateAvatar(it) }
+    }
+
+    // --- Fin de la Lógica de Cámara y Permisos ---
     Box(
         modifier = Modifier
             .fillMaxSize()
