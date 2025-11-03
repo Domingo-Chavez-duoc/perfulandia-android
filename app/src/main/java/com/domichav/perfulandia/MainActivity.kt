@@ -24,27 +24,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             PerfulandiaTheme {
 
-                    HomeScreen(
-                        navController = rememberNavController()
-                    )
+                HomeScreen(
+                    navController = rememberNavController()
+                )
 
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    PerfulandiaTheme {
-        Greeting("Android")
     }
 }

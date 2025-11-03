@@ -36,35 +36,36 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.domichav.perfulandia.ui.components.ImagePickerDialog
+import androidx.compose.material3.Icon
 
 fun createImageUri(context: Context): Uri {
+    // Create a file under the app-specific external files Pictures/ directory so it
+    // matches the <external-files-path path="Pictures/" /> declared in file_paths.xml
+    val picturesDir = context.getExternalFilesDir("Pictures")
     val file = File.createTempFile(
         "JPEG_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}_",
         ".jpg",
-        context.externalCacheDir
+        picturesDir
     )
     return FileProvider.getUriForFile(
         context,
-        // ⚠️ IMPORTANTE: Debe coincidir con el authority de tu FileProvider en AndroidManifest.xml
-        "${context.packageName}.provider",
+        // Use the same authority as declared in AndroidManifest.xml provider
+        "${context.packageName}.fileprovider",
         file
     )
 }
@@ -97,6 +98,8 @@ fun ProfileScreenContent(
     val viewModel: ProfileViewModel = viewModel() // Para llamar a updateAvatar
 
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+    var showImagePickerDialog by remember { mutableStateOf(false) }
+    var pendingAction by remember { mutableStateOf<String?>(null) }
 
     // 1. Definir permisos según la versión de Android
     val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -120,6 +123,46 @@ fun ProfileScreenContent(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let { viewModel.updateAvatar(it) }
+    }
+
+    // Auto-launch the pending action if permissions become granted
+    LaunchedEffect(permissionsState.allPermissionsGranted, pendingAction) {
+        if (permissionsState.allPermissionsGranted && pendingAction != null) {
+            when (pendingAction) {
+                "camera" -> {
+                    val uri = createImageUri(context)
+                    tempCameraUri = uri
+                    takePictureLauncher.launch(uri)
+                }
+                "gallery" -> {
+                    pickImageLauncher.launch("image/*")
+                }
+            }
+            pendingAction = null
+        }
+    }
+
+    // Helpers to launch camera / gallery with permission checks
+    val launchCamera: () -> Unit = {
+        // If permissions are granted, create temp uri and launch
+        if (permissionsState.allPermissionsGranted) {
+            val uri = createImageUri(context)
+            tempCameraUri = uri
+            takePictureLauncher.launch(uri)
+        } else {
+            // Request permissions first and remember intent
+            pendingAction = "camera"
+            permissionsState.launchMultiplePermissionRequest()
+        }
+    }
+
+    val launchGallery: () -> Unit = {
+        if (permissionsState.allPermissionsGranted) {
+            pickImageLauncher.launch("image/*")
+        } else {
+            pendingAction = "gallery"
+            permissionsState.launchMultiplePermissionRequest()
+        }
     }
 
     // --- Fin de la Lógica de Cámara y Permisos ---
@@ -174,6 +217,42 @@ fun ProfileScreenContent(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Avatar: Mostrar imagen si existe, sino placeholder. Click abre selector.
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .clickable { showImagePickerDialog = true }
+                            .padding(4.dp)
+                    ) {
+                        val avatarSize = 120.dp
+                        if (state.avatarUri != null) {
+                            AsyncImage(
+                                model = state.avatarUri,
+                                contentDescription = "Avatar",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(avatarSize)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            // Placeholder icon
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Placeholder avatar",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .height(avatarSize)
+                                    .fillMaxWidth()
+                                    .clip(CircleShape)
+                                    .padding(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     // Nombre
                     Card(
                         modifier = Modifier.fillMaxWidth()
@@ -217,6 +296,21 @@ fun ProfileScreenContent(
                     }
                 }
             }
+        }
+
+        // Image picker dialog (camera / gallery) shown when user taps avatar
+        if (showImagePickerDialog) {
+            ImagePickerDialog(
+                onDismiss = { showImagePickerDialog = false },
+                onCameraClick = {
+                    showImagePickerDialog = false
+                    launchCamera()
+                },
+                onGalleryClick = {
+                    showImagePickerDialog = false
+                    launchGallery()
+                }
+            )
         }
     }
 }

@@ -8,6 +8,8 @@
     <!-- Permisos para cámara y almacenamiento -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Compatibilidad con versiones antiguas (antes de Android 13) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
 
