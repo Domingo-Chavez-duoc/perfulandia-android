@@ -4,16 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import com.domichav.perfulandia.ui.screens.HomeScreen
+import com.domichav.perfulandia.ui.screens.LoginScreen
+import com.domichav.perfulandia.ui.screens.ProfileScreen
+import com.domichav.perfulandia.ui.screens.RegisterScreen
 
 import com.domichav.perfulandia.ui.theme.PerfulandiaTheme
 
@@ -23,11 +20,26 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PerfulandiaTheme {
+                val navController = rememberNavController()
 
-                HomeScreen(
-                    navController = rememberNavController()
-                )
-
+                NavHost(
+                    navController = navController,
+                    startDestination = "home"
+                ) {
+                    composable("home") {
+                        HomeScreen(navController = navController)
+                    }
+                    composable("login") {
+                        LoginScreen(navController = navController)
+                    }
+                    composable("register") {
+                        RegisterScreen(navController = navController)
+                    }
+                    composable("profile") {
+                        // ProfileScreen manages its own ViewModel and state
+                        ProfileScreen()
+                    }
+                }
             }
         }
     }

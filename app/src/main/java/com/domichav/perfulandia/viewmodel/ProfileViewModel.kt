@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import android.net.Uri
 import kotlinx.coroutines.flow.update
+import com.domichav.perfulandia.repository.AvatarRepository
+import kotlinx.coroutines.flow.collect
 
 /**
  * Estado de la UI
@@ -29,12 +31,23 @@ data class ProfileUiState(
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = UserRepository(application)
+    // Avatar persistence repository
+    private val avatarRepository = AvatarRepository(application)
 
     // Estado PRIVADO (solo el ViewModel lo modifica)
     private val _uiState = MutableStateFlow(ProfileUiState())
 
     // Estado PÚBLICO (la UI lo observa)
     val uiState: StateFlow<ProfileUiState> = _uiState
+
+    init {
+        // Suscribirse al URI guardado del avatar y actualizar el estado cuando cambie
+        viewModelScope.launch {
+            avatarRepository.getAvatarUri().collect { uri ->
+                _uiState.update { it.copy(avatarUri = uri) }
+            }
+        }
+    }
 
     /**
      * Carga los datos del usuario desde la API
@@ -57,7 +70,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     _uiState.value.copy(
                         isLoading = false,
                         userName = user.username,
-                        userEmail = user.email ?: "Sin email",
+                        userEmail = user.email, // user.email is non-nullable in DTO
                         error = null
                     )
                 },
@@ -75,6 +88,12 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
      * Actualiza la URI del avatar del usuario.
      */
     fun updateAvatar(uri: Uri?) {
+        // Update UI state immediately
         _uiState.update { it.copy(avatarUri = uri) }
+
+        // Persist the avatar URI asynchronously
+        viewModelScope.launch {
+            avatarRepository.saveAvatarUri(uri)
+        }
     }
 }
