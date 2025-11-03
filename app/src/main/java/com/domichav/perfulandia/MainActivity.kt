@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
                         RegisterScreen(navController = navController)
                     }
                     composable("profile") {
-                        // ProfileScreen manages its own ViewModel and state
+                        // ProfileScreen maneja su propio ViewModel y estado
                         ProfileScreen()
                     }
                 }

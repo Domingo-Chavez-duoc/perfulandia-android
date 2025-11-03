@@ -32,28 +32,27 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.delay
 
 /**
- * Pantalla principal que actúa como centro de navegación.
- * Muestra una pantalla de carga simulada y luego revela las opciones de navegación
- * con animaciones.
+ * Pantalla principal que actúa como centro de navegación
+ * Muestra una pantalla de carga simulada y luego revela las opciones de navegación con animaciones
  *
- * @param navController El controlador de navegación para moverse entre pantallas.
+ * @param navController El controlador de navegación para moverse entre pantallas
  */
 @Composable
 fun HomeScreen(navController: NavController) {
     // 1. Simulación de estado de carga
-    // 'rememberSaveable' para sobrevivir a cambios de configuración como la rotación.
+    // 'rememberSaveable' para sobrevivir a cambios de configuración como la rotación
     var isLoading by rememberSaveable { mutableStateOf(true) }
 
-    // 'LaunchedEffect' para ejecutar una corrutina una sola vez cuando el Composable entra en la composición.
-    // Ideal para cargas de datos iniciales.
+    // 'LaunchedEffect' para ejecutar una corrutina una sola vez cuando el Composable entra en la composición
+    // Ideal para cargas de datos iniciales
     LaunchedEffect(key1 = Unit) {
-        delay(2000) // Simula una carga de datos o inicialización de 2 segundos.
+        delay(2000) // Simula una carga de datos o inicialización de 2 segundos
         isLoading = false // Finaliza el estado de carga.
     }
 
     // 2. Estado derivado para la visibilidad de los botones
-    // 'derivedStateOf' recalcula el valor solo cuando el estado del que depende ('isLoading') cambia.
-    // Es más eficiente que recalcular en cada recomposición.
+    // 'derivedStateOf' recalcula el valor solo cuando el estado del que depende ('isLoading') cambia
+    // Es más eficiente que recalcular en cada recomposición
     val showButtons by remember { derivedStateOf { !isLoading } }
 
     Scaffold { paddingValues ->
@@ -66,7 +65,7 @@ fun HomeScreen(navController: NavController) {
             verticalArrangement = Arrangement.Center
         ) {
             // 3. Indicador de carga animado
-            // 'AnimatedVisibility' muestra u oculta su contenido con una animación.
+            // 'AnimatedVisibility' muestra u oculta su contenido con una animación
             AnimatedVisibility(
                 visible = isLoading,
                 enter = fadeIn(),
@@ -76,7 +75,7 @@ fun HomeScreen(navController: NavController) {
             }
 
             // 4. Botones de navegación con animación
-            // El contenido aparecerá con una animación de deslizamiento y fundido.
+            // El contenido aparece con una animación de deslizamiento y fundido
             AnimatedVisibility(
                 visible = showButtons,
                 enter = slideInVertically { fullHeight -> fullHeight } + fadeIn(),

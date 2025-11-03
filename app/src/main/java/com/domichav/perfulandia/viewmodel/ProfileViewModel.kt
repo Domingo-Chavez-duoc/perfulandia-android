@@ -27,7 +27,8 @@ data class ProfileUiState(
  */
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
-    // Pass the application context to the UserRepository
+
+    // Pasa el contexto de la aplicación a UserRepository
     private val repository = UserRepository(application)
     private val avatarRepository = AvatarRepository(application)
 
@@ -35,10 +36,11 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     val uiState: StateFlow<ProfileUiState> = _uiState
 
     init {
-        // Load user data as soon as the ViewModel is created.
+
+        // Carga user data al crear el ViewModel
         loadUser()
 
-        // Subscribe to avatar URI changes.
+        // Suscribe a cambios en la URI del avatar
         viewModelScope.launch {
             avatarRepository.getAvatarUri().collect { uri ->
                 _uiState.update { it.copy(avatarUri = uri) }
@@ -47,18 +49,19 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
 
     /**
-     * Loads the user data from the API using the new getProfile method.
+     * Cargamos los datos del usuario desde la API utilizando el nuevo method getProfile
      */
     fun loadUser() {
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         viewModelScope.launch {
-            // Call the new getProfile() method which doesn't require an ID.
+            // Llama al nuevo method getProfile() que no requiere un ID
             val result = repository.getProfile()
 
             result.fold(
                 onSuccess = { user ->
-                    // Use the `name` property from the UserResponse data class.
+
+                    // Utiliza el nombre del campo correcto de UserResponse
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -83,10 +86,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
      * Updates the URI of the user's avatar.
      */
     fun updateAvatar(uri: Uri?) {
-        // Update UI state immediately
+        // Updatea el estado de la UI
         _uiState.update { it.copy(avatarUri = uri) }
 
-        // Persist the avatar URI asynchronously
+        // Persistencia asíncrona del URI del avatar
         viewModelScope.launch {
             avatarRepository.saveAvatarUri(uri)
         }

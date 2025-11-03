@@ -10,10 +10,9 @@ import okhttp3.Response
 /**
  * AuthInterceptor: Añade automáticamente el token JWT a las peticiones
  *
- * ¿Cuándo se ejecuta?
- * - ANTES de cada petición HTTP
+ * Se ejecuta antes de la petición HTTP
  *
- * ¿Qué hace?
+ * Uso:
  * 1. Recupera el token del SessionManager
  * 2. Si existe, añade el header: Authorization: Bearer {token}
  * 3. Si no existe, deja la petición sin modificar
@@ -46,7 +45,7 @@ class AuthInterceptor(
             return chain.proceed(originalRequest)
         }
 
-        // Crear nueva petición CON el token
+        // Crear nueva petición con el token
         val authenticatedRequest = originalRequest.newBuilder()
             .header("Authorization", "Bearer $token")
             .build()

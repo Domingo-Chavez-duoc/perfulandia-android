@@ -23,8 +23,8 @@ class AvatarRepository(private val context: Context) {
     }
 
     /**
-     * Obtiene el URI del avatar como Flow reactivo.
-     * Emite cada vez que cambia el avatar guardado.
+     * Obtiene el URI del avatar como Flow reactivo
+     * Emite cada vez que cambia el avatar guardado
      */
     fun getAvatarUri(): Flow<Uri?> {
         return context.avatarDataStore.data.map { preferences ->
@@ -35,8 +35,8 @@ class AvatarRepository(private val context: Context) {
     }
 
     /**
-     * Guarda el URI del avatar en DataStore.
-     * El cambio se persiste inmediatamente.
+     * Guarda el URI del avatar en DataStore
+     * El cambio se persiste inmediatamente
      */
     suspend fun saveAvatarUri(uri: Uri?) {
         if (uri != null) {
@@ -49,7 +49,7 @@ class AvatarRepository(private val context: Context) {
     }
 
     /**
-     * Elimina el URI del avatar de DataStore.
+     * Elimina el URI del avatar de DataStore
      */
     suspend fun clearAvatarUri() {
         context.avatarDataStore.edit { preferences ->

@@ -38,10 +38,10 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
 
-    // When registration succeeds, wait until the token is persisted in SessionManager, then navigate to profile.
+    // Cuando registration sea exitoso, espera a que el token sea persistido en SessionManager, luego navega a profile.
     LaunchedEffect(uiState.success) {
         if (uiState.success) {
-            // Suspend until a non-null, non-empty token is available (prevents racing to profile which caused 401).
+            // Se supende hasta que un token no nulo y que no esté vació este disponible (evita el racing de navegar a profile lo que causaba 401).
             val token = sessionManager.authToken.first { !it.isNullOrEmpty() }
             if (!token.isNullOrEmpty()) {
                 navController.navigate("profile") {

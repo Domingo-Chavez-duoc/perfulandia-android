@@ -36,9 +36,9 @@ import com.domichav.perfulandia.data.local.SessionManager
 import kotlinx.coroutines.flow.first
 
 /**
- * Pantalla de inicio de sesión con validación de formulario y simulación de llamada a API.
+ * Pantalla de inicio de sesión con validación de formulario y simulación de llamada a API
  *
- * @param navController Controlador de navegación para redirigir tras un login exitoso.
+ * @param navController Controlador de navegación para redirigir tras un login exitoso
  */
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -60,7 +60,7 @@ fun LoginScreen(navController: NavController) {
     val isFormValid by remember {
         derivedStateOf {
             android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-                    && password.length >= 6 // Por ejemplo, mínimo 6 caracteres
+                    && password.length >= 6 // Como ejemplo: mínimo 6 caracteres
         }
     }
 
@@ -124,32 +124,34 @@ fun LoginScreen(navController: NavController) {
                         onClick = {
                             isLoading = true
                             scope.launch {
-                                // First try remote login
+                                //Primer intento de remote login (acceso remoto)
                                 val loginReq = LoginRequest(username = email.trim(), password = password)
                                 val remoteResult = userRepo.login(loginReq)
 
                                 if (remoteResult.isSuccess) {
-                                    // Wait until the token saved in SessionManager matches the returned token
+                                    // Esperar hasta que el token guardado en SessionManager coincida con el devuelto
                                     val returnedToken = remoteResult.getOrNull()?.accessToken
                                     if (!returnedToken.isNullOrEmpty()) {
-                                        // suspend until DataStore reports the same token (prevents race)
+                                        // Suspender hasta que DataStore devuelva el mismo token (evita problemas de carrera (race))
+
                                         sessionManager.authToken.first { it == returnedToken }
                                     }
 
-                                    // Successful remote login -> navigate to profile
+                                    // Remote login exitoso -> navegar a perfil
                                     navController.navigate("profile") {
                                         popUpTo("home") { inclusive = false }
                                     }
                                 } else {
-                                    // If remote login failed, fallback to local account
+                                    // Si el remote login falla, intentar el login local
                                     val account = accountRepo.findAccount(email.trim(), password)
                                     delay(300) // small UX delay
                                     if (account != null) {
-                                        // Save a new local token for this account so AuthInterceptor will use it
+                                        // GUardar un nuevo local-token para esta cuenta para que AuthInterceptor lo use
                                         sessionManager.saveAuthToken("local-token-${account.email}")
 
-                                        // local-only token for demo local auth (won't authenticate against server)
-                                        // Use remote login for server-backed profile; local login allows offline/demo
+                                        // Token local para demostración (demo) de autenticación (auth) local (no autentica contra el servidor)
+
+                                        //Usa remote login para un perfil guardado en el servidor; login local permite demostración offline/demo
                                         navController.navigate("profile") {
                                             popUpTo("home") { inclusive = false }
                                         }

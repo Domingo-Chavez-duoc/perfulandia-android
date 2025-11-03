@@ -13,7 +13,7 @@ import com.domichav.perfulandia.data.remote.dto.UserResponse
 import kotlinx.coroutines.flow.first
 
 /**
- * Repository for handling user-related operations, including session management.
+ * Repository para el manejo de operaciones relacionadas con los usuarios, como el manejo de sesiones. (session management)
  */
 class UserRepository(application: Application) {
 
@@ -25,7 +25,7 @@ class UserRepository(application: Application) {
     private val TAG = "UserRepository"
 
     /**
-     * Logs in an existing user via the remote auth endpoint and saves the received token.
+     * Logea un usuario existente a través del endpoint de autenticación remota (remote auth) y guarda el token recibido.
      */
     suspend fun login(request: LoginRequest): Result<LoginResponse> {
         return try {
@@ -50,13 +50,13 @@ class UserRepository(application: Application) {
     }
 
     /**
-     * Registers a new user and saves the token upon success.
+     * Registra un nuevo usuario y guarda el token en caso de éxito
      */
     suspend fun register(request: SignupRequest): Result<SignupResponse> {
         return try {
             val response = authApiService.signup(request)
 
-            // Some APIs return token in different fields. Prefer authToken, fallback to accessToken.
+            // Algunos APIs devuelven el token en diferentes campos. Prefiere authToken por sobre accessToken
             val token = response.authToken ?: response.accessToken
 
             if (token.isNullOrEmpty()) {
@@ -68,7 +68,7 @@ class UserRepository(application: Application) {
             val saved = sessionManager.authToken.first()
             Log.d(TAG, "register: saved token=$saved")
 
-            // On successful signup, save the authentication token.
+            // Si el signup es exitoso, guarda el token de autenticación
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
@@ -76,9 +76,9 @@ class UserRepository(application: Application) {
     }
 
     /**
-     * Fetches the current user's profile. The token is added automatically by the AuthInterceptor.
-     * If the token is a local demo token (prefixed with 'local-token-'), return the profile
-     * from local AccountRepository to avoid 401 from the remote API.
+     * Busca (fetch) el perfil del usuario actual. El token se agrega automáticamente por medio del AuthInterceptor
+     * Si el token es demo local (prefijo 'local-token-'), devuelve el profile del usuario.
+     * Desde el local AccountRepository para evitar 401 de la API remota.
      */
     suspend fun getProfile(): Result<UserResponse> {
         return try {

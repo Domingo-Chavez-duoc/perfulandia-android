@@ -36,33 +36,33 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
 
     /**
      * Registra un nuevo usuario
-     * @param name The user's full name.
-     * @param email The user's email address.
-     * @param password The user's chosen password.
+     * @param name Nombre completo de usuario
+     * @param email Email del usuario
+     * @param password Contraseña del usuario
      */
     fun registerUser(name: String, email: String, password: String) {
-        // Set loading state
+        // Setea un loading state
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         viewModelScope.launch {
-            // Create the request object for the API
+            // Crea una solicitud para la API
             val request = SignupRequest(name = name, email = email, password = password)
 
-            // Call the repository
+            // Llama al repository
             val result: Result<SignupResponse> = repository.register(request)
 
 
-            // Update UI state based on the result from the repository
+            //Updatea el estado de la UI basado en el resultado del repository
             result.fold(
                 onSuccess = {
 
                     accountRepository.saveAccount(Account(name = name, email = email, password = password))
 
-                    // On success, we have saved the token via the repository. Just indicate success.
+                    //On success, tenemos guardado el token a través del repository. Solo indicamos success
                     _uiState.update { it.copy(isLoading = false, success = true) }
                 },
                 onFailure = { exception ->
-                    // On failure, update the state with the error message.
+                    // On failure, updatea el estado de la UI con el error message
                     _uiState.update {
                         it.copy(
                             isLoading = false,

@@ -3,7 +3,6 @@ package com.domichav.perfulandia.data.remote.dto
 import com.google.gson.annotations.SerializedName
 
 /**
- * DTO para la respuesta de lista de usuarios
  * La API devuelve un objeto con "users" y metadata de paginación
  */
 data class UsersResponse(

@@ -9,11 +9,11 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-// Extension property to delegate DataStore creation to the context.
+/// Propiedad de extensión para delegar la creación de DataStore al contexto
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "session")
 
 /**
- * Manages the user's authentication token using Jetpack DataStore.
+ * Maneja el token de autenticación del usuario utilizando Jetpack DataStore
  */
 class SessionManager(context: Context) {
 
@@ -25,8 +25,9 @@ class SessionManager(context: Context) {
     }
 
     /**
-     * Saves the authentication token to DataStore.
-     * @param token The token to save.
+     * Guarda el token de autenticación en DataStore
+     * @param token el token de autenticación a guardar
+     *
      */
     suspend fun saveAuthToken(token: String) {
         dataStore.edit {
@@ -35,8 +36,8 @@ class SessionManager(context: Context) {
     }
 
     /**
-     * Retrieves the authentication token from DataStore as a Flow.
-     * The Flow will emit the token whenever it changes, or null if it doesn't exist.
+     * *Recupera el token de autenticación de DataStore como un flujo
+     * EL flujo emitirá el token cada vez que cambie, o null si no existe
      */
     val authToken: Flow<String?> = dataStore.data.map {
         it[AUTH_TOKEN]

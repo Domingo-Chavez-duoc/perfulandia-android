@@ -3,7 +3,8 @@ package com.domichav.perfulandia.data.remote.dto
 import com.google.gson.annotations.SerializedName
 
 /**
- * Data Transfer Object for the signup request body.
+ * Objeto de transferencia de datos (DTO) para la solicitud de registro.
+ *
  */
 data class SignupRequest(
     val name: String,
@@ -12,9 +13,9 @@ data class SignupRequest(
 )
 
 /**
- * Data Transfer Object for the signup response body.
- * Some APIs return different field names for the token (e.g. "authToken" or "accessToken").
- * We accept both as nullable and let the repository pick the non-null value.
+ * Objeto de transferencia de datos para la respuesta del registro.
+ * Algunos APIs devuelven diferentes nombres de campo para el token (por ejemplo, "authToken" o "accessToken").
+ * Tenemos ambos como nulos y dejamos que el repositorio elija el valor no nulo.
  */
 data class SignupResponse(
     @SerializedName("authToken") val authToken: String? = null,
@@ -23,11 +24,12 @@ data class SignupResponse(
 )
 
 /**
- * Data Transfer Object for the user profile response body from /auth/me.
+ * Transferencia de objetos de datos (DTO) para la respuesta del perfil del usuario.
+ *
  */
 data class UserResponse(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String,
     @SerializedName("email") val email: String
-    // Other fields like 'created_at', 'account_id', 'role' can be added here if needed.
+    // Otros campos como 'created_at', 'account_id', 'role' pueden agregarse aquí si es necesario.
 )

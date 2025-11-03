@@ -54,7 +54,7 @@ import com.domichav.perfulandia.ui.components.ImagePickerDialog
 import androidx.compose.material3.Icon
 
 fun createImageUri(context: Context): Uri {
-    // Create a file under the app-specific external files Pictures/ directory so it
+    // Crea un archivo en Pictures/ para que la cámara lo guarde
     // matches the <external-files-path path="Pictures/" /> declared in file_paths.xml
     val picturesDir = context.getExternalFilesDir("Pictures")
     val file = File.createTempFile(
@@ -64,7 +64,7 @@ fun createImageUri(context: Context): Uri {
     )
     return FileProvider.getUriForFile(
         context,
-        // Use the same authority as declared in AndroidManifest.xml provider
+        // Usa la misma autoridad que se declararó en AndroidManifest.xml provider
         "${context.packageName}.fileprovider",
         file
     )
@@ -125,7 +125,7 @@ fun ProfileScreenContent(
         uri?.let { viewModel.updateAvatar(it) }
     }
 
-    // Auto-launch the pending action if permissions become granted
+    // Inicio automático de la acción pendiente si los permisos se convierten en otorgados (granted)
     LaunchedEffect(permissionsState.allPermissionsGranted, pendingAction) {
         if (permissionsState.allPermissionsGranted && pendingAction != null) {
             when (pendingAction) {
@@ -142,15 +142,15 @@ fun ProfileScreenContent(
         }
     }
 
-    // Helpers to launch camera / gallery with permission checks
+    // Ayuda a iniciar la cámara / galería con control de permisos
     val launchCamera: () -> Unit = {
-        // If permissions are granted, create temp uri and launch
+        // Si se conceden los permisos, crea una URI temporal y lanza
         if (permissionsState.allPermissionsGranted) {
             val uri = createImageUri(context)
             tempCameraUri = uri
             takePictureLauncher.launch(uri)
         } else {
-            // Request permissions first and remember intent
+            // Pide permisos y recuerda la acción
             pendingAction = "camera"
             permissionsState.launchMultiplePermissionRequest()
         }
@@ -217,7 +217,7 @@ fun ProfileScreenContent(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Avatar: Mostrar imagen si existe, sino placeholder. Click abre selector.
+                    // Avatar: Mostrar imagen si existe, sino placeholder. Click abre selector
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
@@ -237,7 +237,7 @@ fun ProfileScreenContent(
                                 contentScale = ContentScale.Crop
                             )
                         } else {
-                            // Placeholder icon
+                            // Ícono Placeholder
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = "Placeholder avatar",
@@ -298,7 +298,7 @@ fun ProfileScreenContent(
             }
         }
 
-        // Image picker dialog (camera / gallery) shown when user taps avatar
+        // Image picker dialog (camera / gallery) se muestra cuando se toca el avatar
         if (showImagePickerDialog) {
             ImagePickerDialog(
                 onDismiss = { showImagePickerDialog = false },
