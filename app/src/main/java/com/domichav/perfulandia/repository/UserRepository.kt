@@ -1,42 +1,44 @@
-package com.example.actividad_2_5_2.repository
+package com.domichav.perfulandia.repository
 
-import android.content.Context
-import com.domichav.perfulandia.data.remote.ApiService
+import android.app.Application
+import com.domichav.perfulandia.data.local.SessionManager
 import com.domichav.perfulandia.data.remote.RetrofitClient
-import com.domichav.perfulandia.data.remote.dto.RegisterRequest
-import com.domichav.perfulandia.data.remote.dto.UserDto
+import com.domichav.perfulandia.data.remote.api.AuthApiService
+import com.domichav.perfulandia.data.remote.dto.SignupRequest
+import com.domichav.perfulandia.data.remote.dto.SignupResponse
+import com.domichav.perfulandia.data.remote.dto.UserResponse
 
 /**
- * Repository: Abstrae la fuente de datos
- * El ViewModel NO sabe si los datos vienen de API, base de datos local, etc.
+ * Repository for handling user-related operations, including session management.
  */
-class UserRepository(context: Context) {
+class UserRepository(application: Application) {
 
-    private val apiService: ApiService = RetrofitClient
-        .create(context)
-        .create(ApiService::class.java)
+    // Create the API service using the app context
+    private val authApiService: AuthApiService = RetrofitClient.create(application)
+    private val sessionManager = SessionManager(application)
 
     /**
-     * Obtiene un usuario de la API
-     *
-     * Usa Result<T> para manejar éxito/error de forma elegante
+     * Registers a new user and saves the token upon success.
      */
-    suspend fun fetchUser(id: Int = 1): Result<UserDto> {
+    suspend fun register(request: SignupRequest): Result<SignupResponse> {
         return try {
-            val user = apiService.getUserById(id)
-            Result.success(user)
+            val response = authApiService.signup(request)
+            // On successful signup, save the authentication token.
+            sessionManager.saveAuthToken(response.authToken)
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
     /**
-     * Registra un nuevo usuario en la API
+     * Fetches the current user's profile. The token is added automatically by the AuthInterceptor.
      */
-    suspend fun register(request: RegisterRequest): Result<UserDto> {
+    suspend fun getProfile(): Result<UserResponse> {
         return try {
-            val newUser = apiService.register(request)
-            Result.success(newUser)
+            // The token is now handled by the interceptor, so we just call the method.
+            val response = authApiService.getMe()
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
         }

@@ -79,12 +79,12 @@ fun ProfileScreen(
 
     // Cargar datos cuando la pantalla se abre
     LaunchedEffect(Unit) {
-        viewModel.loadUser(1)  // ⚠️ Cambia el ID según necesites
+        viewModel.loadUser()
     }
 
     ProfileScreenContent(
         state = state,
-        onRefresh = { viewModel.loadUser(1) }
+        onRefresh = { viewModel.loadUser() }
     )
 }
 @OptIn(ExperimentalPermissionsApi::class)

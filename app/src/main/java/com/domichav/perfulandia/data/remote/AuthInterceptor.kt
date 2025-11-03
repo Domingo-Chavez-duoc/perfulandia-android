@@ -1,6 +1,7 @@
 package com.domichav.perfulandia.data.remote
 
 import com.domichav.perfulandia.data.local.SessionManager
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -25,7 +26,7 @@ class AuthInterceptor(
 
         // Recuperar el token (usando runBlocking porque intercept no es suspend)
         val token = runBlocking {
-            sessionManager.getAuthToken()
+            sessionManager.authToken.first()
         }
 
         // Si no hay token, continuar con la petición original

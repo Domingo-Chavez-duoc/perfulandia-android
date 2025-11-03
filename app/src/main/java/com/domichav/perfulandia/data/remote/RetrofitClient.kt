@@ -2,48 +2,50 @@ package com.domichav.perfulandia.data.remote
 
 import android.content.Context
 import com.domichav.perfulandia.data.local.SessionManager
+import com.domichav.perfulandia.data.remote.api.AuthApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.TimeUnit
 
+/**
+ * Singleton object to provide a configured Retrofit instance.
+ */
 object RetrofitClient {
 
-    // ⚠️ CAMBIA ESTA URL POR LA DE TU API
-    private const val BASE_URL = "https://dummyjson.com/"
+    private const val BASE_URL = "https://x8ki-letl-twmt.n7.xano.io/api:Rfm_61dW/"
 
     /**
-     * Inicializa Retrofit con el contexto de la app
-     * Llamar desde Application o ViewModel al inicio
+     * Creates and configures a Retrofit service instance.
+     * @param context The application context, used for initializing the SessionManager.
+     * @return A fully configured instance of [AuthApiService].
      */
-    fun create(context: Context): Retrofit {
-
-        // 1️⃣ SessionManager para manejar el token
+    fun create(context: Context): AuthApiService {
+        // 1. SessionManager to get the token
         val sessionManager = SessionManager(context)
 
-        // 2️⃣ AuthInterceptor para inyectar el token automáticamente
+        // 2. AuthInterceptor to add the token to headers
         val authInterceptor = AuthInterceptor(sessionManager)
 
-        // 3️⃣ HttpLoggingInterceptor para debugging
+        // 3. Logging Interceptor for debugging
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY  // ⚠️ Cambiar a NONE en producción
+            level = HttpLoggingInterceptor.Level.BODY
         }
 
-        // 4️⃣ OkHttpClient con AMBOS interceptores
-        val okHttpClient = OkHttpClient.Builder()
-            // ⚠️ ORDEN IMPORTANTE: AuthInterceptor primero, luego Logging
-            .addInterceptor(authInterceptor)    // Añade el token
-            .addInterceptor(loggingInterceptor)  // Muestra en Logcat (con token)
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(20, TimeUnit.SECONDS)
+        // 4. OkHttpClient with both interceptors
+        val client = OkHttpClient.Builder()
+            .addInterceptor(authInterceptor) // Automatically adds the token
+            .addInterceptor(loggingInterceptor) // Logs the request with the token
             .build()
 
-        // 5️⃣ Retrofit con el cliente configurado
-        return Retrofit.Builder()
+        // 5. Retrofit instance using the configured client
+        val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
-            .client(okHttpClient)
             .build()
+
+        // 6. Create the API service
+        return retrofit.create(AuthApiService::class.java)
     }
 }

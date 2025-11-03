@@ -3,10 +3,11 @@ package com.domichav.perfulandia.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.domichav.perfulandia.data.remote.dto.RegisterRequest
-import com.example.actividad_2_5_2.repository.UserRepository
+import com.domichav.perfulandia.data.remote.dto.SignupRequest
+import com.domichav.perfulandia.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -23,6 +24,7 @@ data class RegisterUiState(
  */
 class RegisterViewModel(application: Application) : AndroidViewModel(application) {
 
+    // Pass the application context to the UserRepository
     private val repository = UserRepository(application)
 
     private val _uiState = MutableStateFlow(RegisterUiState())
@@ -30,18 +32,35 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
 
     /**
      * Registra un nuevo usuario
+     * @param name The user's full name.
+     * @param email The user's email address.
+     * @param password The user's chosen password.
      */
-    fun registerUser(username: String, email: String, password: String) {
-        _uiState.value = RegisterUiState(isLoading = true)
+    fun registerUser(name: String, email: String, password: String) {
+        // Set loading state
+        _uiState.update { it.copy(isLoading = true, error = null) }
 
         viewModelScope.launch {
-            val request = RegisterRequest(username, email, password)
+            // Create the request object for the API
+            val request = SignupRequest(name = name, email = email, password = password)
+
+            // Call the repository
             val result = repository.register(request)
 
-            _uiState.value = result.fold(
-                onSuccess = { RegisterUiState(success = true) },
+            // Update UI state based on the result from the repository
+            result.fold(
+                onSuccess = { signupResponse ->
+                    // On success, we have saved the token via the repository. Just indicate success.
+                    _uiState.update { it.copy(isLoading = false, success = true) }
+                },
                 onFailure = { exception ->
-                    RegisterUiState(error = exception.localizedMessage ?: "Error desconocido")
+                    // On failure, update the state with the error message.
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = exception.message ?: "Error desconocido"
+                        )
+                    }
                 }
             )
         }

@@ -34,8 +34,8 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
 
     RegisterScreenContent(
         uiState = uiState,
-        onRegister = { username, email, password ->
-            viewModel.registerUser(username, email, password)
+        onRegister = { name, email, password ->
+            viewModel.registerUser(name, email, password)
         }
     )
 }
@@ -45,15 +45,15 @@ fun RegisterScreenContent(
     uiState: RegisterUiState,
     onRegister: (String, String, String) -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var confirmEmail by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
-    val isFormValid by remember(username, email, confirmEmail, password, confirmPassword) {
+    val isFormValid by remember(name, email, confirmEmail, password, confirmPassword) {
         mutableStateOf(
-            username.isNotBlank() &&
+            name.isNotBlank() &&
                 email.isNotBlank() &&
                 password.isNotBlank() &&
                 email == confirmEmail &&
@@ -77,9 +77,9 @@ fun RegisterScreenContent(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text("Usuario") })
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nombre Completo") })
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
@@ -113,7 +113,7 @@ fun RegisterScreenContent(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Button(onClick = { onRegister(username, email, password) }, enabled = isFormValid) {
+                Button(onClick = { onRegister(name, email, password) }, enabled = isFormValid) {
                     Text("Registrarse")
                 }
 
@@ -135,30 +135,5 @@ fun RegisterScreenContent(
 fun RegisterScreenPreview() {
     MaterialTheme {
         RegisterScreenContent(uiState = RegisterUiState(), onRegister = { _, _, _ -> })
-    }
-}
-
-@Preview(showBackground = true, name = "Loading State")
-@Composable
-fun RegisterScreenPreview_Loading() {
-    MaterialTheme {
-        RegisterScreenContent(uiState = RegisterUiState(isLoading = true), onRegister = { _, _, _ -> })
-    }
-}
-
-@Preview(showBackground = true, name = "Error State")
-@Composable
-fun RegisterScreenPreview_Error() {
-    MaterialTheme {
-        RegisterScreenContent(uiState = RegisterUiState(error = "El usuario ya existe"), onRegister = { _, _, _ -> })
-    }
-}
-
-// ver si esto te puede redirecconar automáticamente al perfil creado
-@Preview(showBackground = true, name = "Success State")
-@Composable
-fun RegisterScreenPreview_Success() {
-    MaterialTheme {
-        RegisterScreenContent(uiState = RegisterUiState(success = true), onRegister = { _, _, _ -> })
     }
 }

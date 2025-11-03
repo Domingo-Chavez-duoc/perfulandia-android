@@ -1,46 +1,44 @@
 package com.domichav.perfulandia.data.local
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+// Extension property to delegate DataStore creation to the context.
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "session")
+
 /**
- * SessionManager: Guarda y recupera el token JWT de forma segura
+ * Manages the user's authentication token using Jetpack DataStore.
  */
-class SessionManager(private val context: Context) {
+class SessionManager(context: Context) {
+
+    private val dataStore = context.dataStore
 
     companion object {
-        private val Context.dataStore by preferencesDataStore(name = "session_prefs")
-        private val KEY_AUTH_TOKEN = stringPreferencesKey("auth_token")
+        // The key for storing the auth token in DataStore.
+        private val AUTH_TOKEN = stringPreferencesKey("auth_token")
     }
 
     /**
-     * Guarda el token de autenticación
+     * Saves the authentication token to DataStore.
+     * @param token The token to save.
      */
     suspend fun saveAuthToken(token: String) {
-        context.dataStore.edit { preferences ->
-            preferences[KEY_AUTH_TOKEN] = token
+        dataStore.edit {
+            it[AUTH_TOKEN] = token
         }
     }
 
     /**
-     * Recupera el token guardado (o null si no existe)
+     * Retrieves the authentication token from DataStore as a Flow.
+     * The Flow will emit the token whenever it changes, or null if it doesn't exist.
      */
-    suspend fun getAuthToken(): String? {
-        return context.dataStore.data
-            .map { preferences -> preferences[KEY_AUTH_TOKEN] }
-            .first()
-    }
-
-    /**
-     * Elimina el token (cerrar sesión)
-     */
-    suspend fun clearAuthToken() {
-        context.dataStore.edit { preferences ->
-            preferences.remove(KEY_AUTH_TOKEN)
-        }
+    val authToken: Flow<String?> = dataStore.data.map {
+        it[AUTH_TOKEN]
     }
 }
