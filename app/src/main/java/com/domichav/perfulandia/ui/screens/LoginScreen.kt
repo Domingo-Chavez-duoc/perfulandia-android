@@ -28,6 +28,12 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import com.domichav.perfulandia.repository.AccountRepository
+import com.domichav.perfulandia.repository.UserRepository
+import com.domichav.perfulandia.data.remote.dto.LoginRequest
+import com.domichav.perfulandia.data.local.SessionManager
+import kotlinx.coroutines.flow.first
 
 /**
  * Pantalla de inicio de sesión con validación de formulario y simulación de llamada a API.
@@ -45,6 +51,10 @@ fun LoginScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val accountRepo = remember { AccountRepository(context) }
+    val userRepo = remember { UserRepository(context.applicationContext as android.app.Application) }
+    val sessionManager = remember { SessionManager(context) }
 
     // 3. Validación de campos usando 'derivedStateOf' para mayor eficiencia
     val isFormValid by remember {
@@ -114,21 +124,44 @@ fun LoginScreen(navController: NavController) {
                         onClick = {
                             isLoading = true
                             scope.launch {
-                                delay(2000) // Simula la llamada a la API
-                                val loginSuccess = (email == "test@test.com" && password == "123456")
-                                if (loginSuccess) {
+                                // First try remote login
+                                val loginReq = LoginRequest(username = email.trim(), password = password)
+                                val remoteResult = userRepo.login(loginReq)
+
+                                if (remoteResult.isSuccess) {
+                                    // Wait until the token saved in SessionManager matches the returned token
+                                    val returnedToken = remoteResult.getOrNull()?.accessToken
+                                    if (!returnedToken.isNullOrEmpty()) {
+                                        // suspend until DataStore reports the same token (prevents race)
+                                        sessionManager.authToken.first { it == returnedToken }
+                                    }
+
+                                    // Successful remote login -> navigate to profile
                                     navController.navigate("profile") {
                                         popUpTo("home") { inclusive = false }
                                     }
                                 } else {
-                                    scope.launch {
+                                    // If remote login failed, fallback to local account
+                                    val account = accountRepo.findAccount(email.trim(), password)
+                                    delay(300) // small UX delay
+                                    if (account != null) {
+                                        // Save a new local token for this account so AuthInterceptor will use it
+                                        sessionManager.saveAuthToken("local-token-${account.email}")
+
+                                        // local-only token for demo local auth (won't authenticate against server)
+                                        // Use remote login for server-backed profile; local login allows offline/demo
+                                        navController.navigate("profile") {
+                                            popUpTo("home") { inclusive = false }
+                                        }
+                                    } else {
                                         snackbarHostState.showSnackbar("Error: Usuario o contraseña incorrectos.")
                                     }
                                 }
+
                                 isLoading = false
                             }
                         },
-                        enabled = isFormValid, // Ya no es necesario !isLoading porque el botón no existe cuando isLoading=true
+                        enabled = isFormValid,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Iniciar Sesión")

@@ -1,5 +1,6 @@
 package com.domichav.perfulandia.data.remote
 
+import android.util.Log
 import com.domichav.perfulandia.data.local.SessionManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -21,13 +22,24 @@ class AuthInterceptor(
     private val sessionManager: SessionManager
 ) : Interceptor {
 
+    private val TAG = "AuthInterceptor"
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
+
+        // Evitar añadir Authorization para los endpoints de autenticación (login/signup)
+        val path = originalRequest.url.encodedPath
+        if (path.contains("/auth/login") || path.contains("/auth/signup")) {
+            Log.d(TAG, "Skipping auth header for path=$path")
+            return chain.proceed(originalRequest)
+        }
 
         // Recuperar el token (usando runBlocking porque intercept no es suspend)
         val token = runBlocking {
             sessionManager.authToken.first()
         }
+
+        Log.d(TAG, "intercept: path=$path token=${token ?: "<null>"}")
 
         // Si no hay token, continuar con la petición original
         if (token.isNullOrEmpty()) {

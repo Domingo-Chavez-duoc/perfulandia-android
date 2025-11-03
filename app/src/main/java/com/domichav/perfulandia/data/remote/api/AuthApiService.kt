@@ -1,5 +1,7 @@
 package com.domichav.perfulandia.data.remote.api
 
+import com.domichav.perfulandia.data.remote.dto.LoginRequest
+import com.domichav.perfulandia.data.remote.dto.LoginResponse
 import com.domichav.perfulandia.data.remote.dto.SignupRequest
 import com.domichav.perfulandia.data.remote.dto.SignupResponse
 import com.domichav.perfulandia.data.remote.dto.UserResponse
@@ -11,6 +13,12 @@ import retrofit2.http.POST
  * Defines the authentication endpoints for the API using Retrofit.
  */
 interface AuthApiService {
+
+    /**
+     * Performs a login request.
+     */
+    @POST("auth/login")
+    suspend fun login(@Body request: LoginRequest): LoginResponse
 
     /**
      * Performs a signup request.

@@ -3,7 +3,10 @@ package com.domichav.perfulandia.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.domichav.perfulandia.data.local.Account
+import com.domichav.perfulandia.repository.AccountRepository
 import com.domichav.perfulandia.data.remote.dto.SignupRequest
+import com.domichav.perfulandia.data.remote.dto.SignupResponse
 import com.domichav.perfulandia.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +29,7 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
 
     // Pass the application context to the UserRepository
     private val repository = UserRepository(application)
+    private val accountRepository = AccountRepository(application)
 
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState: StateFlow<RegisterUiState> = _uiState
@@ -45,11 +49,15 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
             val request = SignupRequest(name = name, email = email, password = password)
 
             // Call the repository
-            val result = repository.register(request)
+            val result: Result<SignupResponse> = repository.register(request)
+
 
             // Update UI state based on the result from the repository
             result.fold(
-                onSuccess = { signupResponse ->
+                onSuccess = {
+
+                    accountRepository.saveAccount(Account(name = name, email = email, password = password))
+
                     // On success, we have saved the token via the repository. Just indicate success.
                     _uiState.update { it.copy(isLoading = false, success = true) }
                 },

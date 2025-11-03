@@ -88,4 +88,7 @@ dependencies {
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
     // Coil - Para cargar imágenes desde URLs (opcional)
     //implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Gson for JSON serialization of accounts in DataStore
+    implementation("com.google.code.gson:gson:2.10.1")
 }

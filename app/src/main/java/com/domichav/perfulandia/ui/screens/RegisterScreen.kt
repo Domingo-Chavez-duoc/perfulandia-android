@@ -13,6 +13,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,10 +28,28 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.domichav.perfulandia.viewmodel.RegisterUiState
 import com.domichav.perfulandia.viewmodel.RegisterViewModel
+import com.domichav.perfulandia.data.local.SessionManager
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+
+    // When registration succeeds, wait until the token is persisted in SessionManager, then navigate to profile.
+    LaunchedEffect(uiState.success) {
+        if (uiState.success) {
+            // Suspend until a non-null, non-empty token is available (prevents racing to profile which caused 401).
+            val token = sessionManager.authToken.first { !it.isNullOrEmpty() }
+            if (!token.isNullOrEmpty()) {
+                navController.navigate("profile") {
+                    popUpTo("home") { inclusive = false }
+                }
+            }
+        }
+    }
 
     RegisterScreenContent(
         uiState = uiState,

@@ -13,10 +13,13 @@ data class SignupRequest(
 
 /**
  * Data Transfer Object for the signup response body.
+ * Some APIs return different field names for the token (e.g. "authToken" or "accessToken").
+ * We accept both as nullable and let the repository pick the non-null value.
  */
 data class SignupResponse(
-    @SerializedName("authToken") val authToken: String,
-    @SerializedName("user_id") val userId: Int
+    @SerializedName("authToken") val authToken: String? = null,
+    @SerializedName("accessToken") val accessToken: String? = null,
+    @SerializedName("user_id") val userId: Int? = null
 )
 
 /**
