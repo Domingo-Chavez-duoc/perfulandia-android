@@ -1,20 +1,38 @@
 package com.domichav.perfulandia.ui.screens
 
+import android.content.res.Resources
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -25,10 +43,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.domichav.perfulandia.ui.theme.Primary
+import com.domichav.perfulandia.ui.theme.TopAppBarColor
+import com.domichav.perfulandia.ui.components.*
+import com.domichav.perfulandia.R // Import your app's resources
+import com.domichav.perfulandia.ui.theme.ButtonColor
 import kotlinx.coroutines.delay
 
 /**
@@ -37,6 +64,7 @@ import kotlinx.coroutines.delay
  *
  * @param navController El controlador de navegación para moverse entre pantallas
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
     // 1. Simulación de estado de carga
@@ -55,7 +83,33 @@ fun HomeScreen(navController: NavController) {
     // Es más eficiente que recalcular en cada recomposición
     val showButtons by remember { derivedStateOf { !isLoading } }
 
-    Scaffold { paddingValues ->
+    Scaffold (topBar = {
+        CenterAlignedTopAppBar(
+            title = {Text(
+                text = "Perfulandia",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.scale(1.5f)
+            )},
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = TopAppBarColor),
+            modifier = Modifier.height(90.dp),
+            navigationIcon = {
+                IconButton(
+                    onClick = { },
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(100.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.p1),
+                        contentDescription = "Logo",
+                        modifier = Modifier
+                            .scale(1.5f)
+                    )
+                }
+            }
+        )
+    }) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -89,19 +143,24 @@ fun HomeScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Botones para navegar a las diferentes pantallas
-                    Button(onClick = { navController.navigate("login") }) {
+                    Button(
+                        onClick = { navController.navigate("login") },
+                        colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
+                    ) {
                         Text("Iniciar Sesión")
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Button(onClick = { navController.navigate("register") }) {
+                    Button(onClick = { navController.navigate("register") },
+                        colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)) {
                         Text("Registrarse")
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Button(onClick = { navController.navigate("profile") }) {
+                    Button(onClick = { navController.navigate("profile") },
+                        colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)) {
                         Text("Ver Perfil (Acceso directo)")
                     }
                 }

@@ -12,8 +12,15 @@ val Surface = Color(0xFFFFFFFF)           // Fondo de superficies
 val Foreground = Color(0xFF111827)        // Texto principal
 val ForegroundMuted = Color(0xFF6B7280)   // Texto secundario / muted
 
+val TopAppBarColor = Color(0xFFAB9559)
+
+val ButtonColor = Color(0xD4000000)
+
+
 // Paleta oscura
 val PrimaryDark = Primary
 val SurfaceDark = Color(0xFF111827)
 val ForegroundDark = Color(0xFFF9FAFB)
 val ForegroundMutedDark = Color(0xFF9CA3AF)
+val TopAppBarColorDark = Color(0xFF673AB7)
+val ButtonColorDark = ButtonColor
