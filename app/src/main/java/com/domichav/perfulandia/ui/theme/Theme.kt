@@ -17,13 +17,13 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = Color.White,
     surface = SurfaceDark,
     onSurface = ForegroundDark,
-    background = SurfaceDark,
+    background = TopAppBarColor,
     onBackground = ForegroundDark
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = Primary,
-    background = Surface,
+    background = TopAppBarColor,
     surface = Surface,
     onPrimary = Color.White,
     onBackground = Foreground,

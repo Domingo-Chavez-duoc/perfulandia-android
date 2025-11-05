@@ -12,7 +12,7 @@ val Surface = Color(0xFFFFFFFF)           // Fondo de superficies
 val Foreground = Color(0xFF111827)        // Texto principal
 val ForegroundMuted = Color(0xFF6B7280)   // Texto secundario / muted
 
-val TopAppBarColor = Color(0xFFAB9559)
+val TopAppBarColor = Color(0xFFD7BC7E)
 
 val ButtonColor = Color(0xD4000000)
 
