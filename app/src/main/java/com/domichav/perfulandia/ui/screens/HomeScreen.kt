@@ -20,6 +20,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -32,6 +35,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -67,6 +72,7 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
+
     // 1. Simulación de estado de carga
     // 'rememberSaveable' para sobrevivir a cambios de configuración como la rotación
     var isLoading by rememberSaveable { mutableStateOf(true) }
@@ -83,38 +89,42 @@ fun HomeScreen(navController: NavController) {
     // Es más eficiente que recalcular en cada recomposición
     val showButtons by remember { derivedStateOf { !isLoading } }
 
-    Scaffold (topBar = {
-        CenterAlignedTopAppBar(
-            title = {Text(
-                text = "Perfulandia",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.scale(1.5f)
-            )},
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = TopAppBarColor),
-            modifier = Modifier.height(90.dp),
-            navigationIcon = {
-                IconButton(
-                    onClick = { },
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text(
+                    "Perfulandia",
                     modifier = Modifier
-                        .width(100.dp)
-                        .height(100.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.p1),
-                        contentDescription = "Logo",
-                        modifier = Modifier
-                            .scale(1.5f)
-                    )
-                }
+                        .scale(3f)
+                ) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent // Optional: for when content scrolls
+                ),
+                modifier = Modifier
+                    .height(200.dp)
+            )
+        },
+        bottomBar = {
+            IconButton(
+                modifier = Modifier.clip(CircleShape),
+                onClick = {showButtons}
+            ){
+                Image(
+                    painter = painterResource(id = R.drawable.p1),
+                    contentDescription = "Logo",
+                    modifier = Modifier
+                        .scale(1.5f)
+                )
             }
-        )
-    }) { paddingValues ->
-
+        }
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(16.dp)
+                .background(MaterialTheme.colorScheme.background),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -155,6 +165,7 @@ fun HomeScreen(navController: NavController) {
                     Button(onClick = { navController.navigate("register") },
                         colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)) {
                         Text("Registrarse")
+
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
