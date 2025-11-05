@@ -1,5 +1,6 @@
 package com.domichav.perfulandia.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -19,6 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -29,10 +32,13 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.domichav.perfulandia.R
 import com.domichav.perfulandia.repository.AccountRepository
 import com.domichav.perfulandia.repository.UserRepository
 import com.domichav.perfulandia.data.remote.dto.LoginRequest
 import com.domichav.perfulandia.data.local.SessionManager
+import com.domichav.perfulandia.ui.theme.TopAppBarColor
 import kotlinx.coroutines.flow.first
 
 /**
@@ -40,6 +46,7 @@ import kotlinx.coroutines.flow.first
  *
  * @param navController Controlador de navegación para redirigir tras un login exitoso
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(navController: NavController) {
     // 1. Estados del formulario
@@ -65,7 +72,33 @@ fun LoginScreen(navController: NavController) {
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {Text(
+                    text = "Perfulandia",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.scale(1.5f)
+                )},
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = TopAppBarColor),
+                modifier = Modifier.height(90.dp),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { },
+                        modifier = Modifier
+                            .width(100.dp)
+                            .height(100.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.p1),
+                            contentDescription = "Logo",
+                            modifier = Modifier
+                                .scale(1.5f)
+                        )
+                    }
+                }
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
