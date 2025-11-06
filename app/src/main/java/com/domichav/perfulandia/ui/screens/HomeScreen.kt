@@ -63,6 +63,7 @@ import com.domichav.perfulandia.ui.theme.TopAppBarColor
 import com.domichav.perfulandia.ui.components.*
 import com.domichav.perfulandia.R // Import your app's resources
 import com.domichav.perfulandia.ui.theme.ButtonColor
+import com.domichav.perfulandia.ui.theme.ImperialScript
 import kotlinx.coroutines.delay
 
 /**
@@ -91,14 +92,14 @@ fun HomeScreen(navController: NavController) {
     // Es más eficiente que recalcular en cada recomposición
     val showButtons by remember { derivedStateOf { !isLoading } }
 
-    /*Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
         // The background image
         Image(
-            painter = painterResource(id = R.drawable.fondoperfu), // Replace with your background image resource
+            painter = painterResource(id = R.drawable.brown2), // Replace with your background image resource
             contentDescription = "Background Image",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop // Or ContentScale.FillBounds, etc.
-        )*/
+        )
 
         Scaffold(
             // Make Scaffold background transparent to see the image
@@ -109,37 +110,39 @@ fun HomeScreen(navController: NavController) {
                         Text(
                             "Perfulandia",
                             modifier = Modifier
-                                .scale(2.5f)
+                                .scale(2.5f),
+                            fontFamily = ImperialScript
                         )
                     },
+
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
                         scrolledContainerColor = Color.Transparent
                     ),
                     modifier = Modifier
-                        .height(150.dp)
+                        .height(150.dp),
                 )
             },
-            bottomBar = {
-                IconButton(
-                    modifier = Modifier.clip(CircleShape),
-                    onClick = { /* showButtons is read-only, decide what this click should do */ }
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.p1),
-                        contentDescription = "Logo",
-                        modifier = Modifier
-                            .scale(1.5f)
-                    )
-                }
-            }
+            //bottomBar = {
+                //IconButton(
+                    //modifier = Modifier.clip(CircleShape),
+                    //onClick = { /* showButtons is read-only, decide what this click should do */ }
+                //) {
+                    //Image(
+                        //painter = painterResource(id = R.drawable.p1),
+                        //contentDescription = "Logo",
+                        //modifier = Modifier
+                            //.scale(1.5f)
+                    //)
+                //}
+            //}
         ) { paddingValues ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    //.padding(paddingValues)
-                    //.padding(16.dp)
-                    .background(color = MaterialTheme.colorScheme.background),
+                    .padding(paddingValues)
+                    .padding(16.dp)
+                    .background(color = Color.Transparent),
 
                 // The background modifier is removed from here to keep it transparent
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -198,7 +201,7 @@ fun HomeScreen(navController: NavController) {
             }
         }
     }
-//}
+}
 
 @Preview(showBackground = true)
 @Composable
