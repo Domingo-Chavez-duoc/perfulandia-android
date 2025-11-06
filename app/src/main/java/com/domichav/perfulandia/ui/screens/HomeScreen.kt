@@ -10,6 +10,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -52,6 +53,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -89,96 +91,114 @@ fun HomeScreen(navController: NavController) {
     // Es más eficiente que recalcular en cada recomposición
     val showButtons by remember { derivedStateOf { !isLoading } }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(
-                    "Perfulandia",
+    /*Box(modifier = Modifier.fillMaxSize()) {
+        // The background image
+        Image(
+            painter = painterResource(id = R.drawable.fondoperfu), // Replace with your background image resource
+            contentDescription = "Background Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop // Or ContentScale.FillBounds, etc.
+        )*/
+
+        Scaffold(
+            // Make Scaffold background transparent to see the image
+            containerColor = Color.Transparent,
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            "Perfulandia",
+                            modifier = Modifier
+                                .scale(2.5f)
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent
+                    ),
                     modifier = Modifier
-                        .scale(3f)
-                ) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent // Optional: for when content scrolls
-                ),
-                modifier = Modifier
-                    .height(200.dp)
-            )
-        },
-        bottomBar = {
-            IconButton(
-                modifier = Modifier.clip(CircleShape),
-                onClick = {showButtons}
-            ){
-                Image(
-                    painter = painterResource(id = R.drawable.p1),
-                    contentDescription = "Logo",
-                    modifier = Modifier
-                        .scale(1.5f)
+                        .height(150.dp)
                 )
-            }
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-                .background(MaterialTheme.colorScheme.background),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            // 3. Indicador de carga animado
-            // 'AnimatedVisibility' muestra u oculta su contenido con una animación
-            AnimatedVisibility(
-                visible = isLoading,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                CircularProgressIndicator()
-            }
-
-            // 4. Botones de navegación con animación
-            // El contenido aparece con una animación de deslizamiento y fundido
-            AnimatedVisibility(
-                visible = showButtons,
-                enter = slideInVertically { fullHeight -> fullHeight } + fadeIn(),
-                exit = slideOutVertically { fullHeight -> -fullHeight } + fadeOut()
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+            },
+            bottomBar = {
+                IconButton(
+                    modifier = Modifier.clip(CircleShape),
+                    onClick = { /* showButtons is read-only, decide what this click should do */ }
                 ) {
-                    Text("¡Bienvenido a Perfulandia!")
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Image(
+                        painter = painterResource(id = R.drawable.p1),
+                        contentDescription = "Logo",
+                        modifier = Modifier
+                            .scale(1.5f)
+                    )
+                }
+            }
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    //.padding(paddingValues)
+                    //.padding(16.dp)
+                    .background(color = MaterialTheme.colorScheme.background),
 
-                    // Botones para navegar a las diferentes pantallas
-                    Button(
-                        onClick = { navController.navigate("login") },
-                        colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
+                // The background modifier is removed from here to keep it transparent
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+
+            ) {
+                // 3. Indicador de carga animado
+                AnimatedVisibility(
+                    visible = isLoading,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    CircularProgressIndicator()
+                }
+
+                // 4. Botones de navegación con animación
+                AnimatedVisibility(
+                    visible = showButtons,
+                    enter = slideInVertically { fullHeight -> fullHeight } + fadeIn(),
+                    exit = slideOutVertically { fullHeight -> -fullHeight } + fadeOut()
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Text("Iniciar Sesión")
-                    }
+                        Text("¡Bienvenido a Perfulandia!")
+                        Spacer(modifier = Modifier.height(24.dp))
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        // Botones para navegar a las diferentes pantallas
+                        Button(
+                            onClick = { navController.navigate("login") },
+                            colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
+                        ) {
+                            Text("Iniciar Sesión")
+                        }
 
-                    Button(onClick = { navController.navigate("register") },
-                        colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)) {
-                        Text("Registrarse")
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    }
+                        Button(
+                            onClick = { navController.navigate("register") },
+                            colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
+                        ) {
+                            Text("Registrarse")
+                        }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    Button(onClick = { navController.navigate("profile") },
-                        colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)) {
-                        Text("Ver Perfil (Acceso directo)")
+                        Button(
+                            onClick = { navController.navigate("profile") },
+                            colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
+                        ) {
+                            Text("Ver Perfil (Acceso directo)")
+                        }
                     }
                 }
             }
         }
     }
-}
+//}
 
 @Preview(showBackground = true)
 @Composable
