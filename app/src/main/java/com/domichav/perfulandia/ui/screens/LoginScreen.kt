@@ -33,12 +33,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
 import com.domichav.perfulandia.R
 import com.domichav.perfulandia.repository.AccountRepository
 import com.domichav.perfulandia.repository.UserRepository
 import com.domichav.perfulandia.data.remote.dto.LoginRequest
 import com.domichav.perfulandia.data.local.SessionManager
-import com.domichav.perfulandia.ui.theme.TopAppBarColor
+import com.domichav.perfulandia.ui.theme.ButtonColor
+import com.domichav.perfulandia.ui.theme.ImperialScript
 import kotlinx.coroutines.flow.first
 
 /**
@@ -71,135 +74,135 @@ fun LoginScreen(navController: NavController) {
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {Text(
-                    text = "Perfulandia",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.scale(1.5f)
-                )},
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = TopAppBarColor),
-                modifier = Modifier.height(90.dp),
-                navigationIcon = {
-                    IconButton(
-                        onClick = { },
-                        modifier = Modifier
-                            .width(100.dp)
-                            .height(100.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.p1),
-                            contentDescription = "Logo",
-                            modifier = Modifier
-                                .scale(1.5f)
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text("Iniciar Sesión", style = MaterialTheme.typography.headlineLarge)
-            Spacer(modifier = Modifier.height(32.dp))
+    // Wrap with a Box that draws the same full-screen background image as HomeScreen
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.brown3),
+            contentDescription = "Background Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
 
-            // Campo de Email
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Correo Electrónico") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Campo de Contraseña
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Contraseña") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                    val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = image, contentDescription = description)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Botón de Iniciar Sesión y CircularProgressIndicator
-            Box(
+        Scaffold(
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text(
+                        text = "Login",
+                        modifier = Modifier.scale(2.5f),
+                        fontFamily = ImperialScript
+                    ) },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent
+                    ),
+                    modifier = Modifier.height(150.dp)
+                )
+            },
+            containerColor = Color.Transparent // make scaffold background transparent so the image shows
+        ) { paddingValues ->
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp), // Damos una altura fija al Box para evitar saltos de UI
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                // ***** CAMBIO CLAVE AQUÍ *****
-                // Usamos un simple if/else en lugar de AnimatedVisibility
-                if (isLoading) {
-                    CircularProgressIndicator()
-                } else {
-                    Button(
-                        onClick = {
-                            isLoading = true
-                            scope.launch {
-                                //Primer intento de remote login (acceso remoto)
-                                val loginReq = LoginRequest(username = email.trim(), password = password)
-                                val remoteResult = userRepo.login(loginReq)
+                Text("Iniciar Sesión", style = MaterialTheme.typography.headlineLarge)
+                Spacer(modifier = Modifier.height(32.dp))
 
-                                if (remoteResult.isSuccess) {
-                                    // Esperar hasta que el token guardado en SessionManager coincida con el devuelto
-                                    val returnedToken = remoteResult.getOrNull()?.accessToken
-                                    if (!returnedToken.isNullOrEmpty()) {
-                                        // Suspender hasta que DataStore devuelva el mismo token (evita problemas de carrera (race))
+                // Campo de Email
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Correo Electrónico") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
 
-                                        sessionManager.authToken.first { it == returnedToken }
-                                    }
+                // Campo de Contraseña
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Contraseña") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(imageVector = image, contentDescription = description)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(32.dp))
 
-                                    // Remote login exitoso -> navegar a perfil
-                                    navController.navigate("profile") {
-                                        popUpTo("home") { inclusive = false }
-                                    }
-                                } else {
-                                    // Si el remote login falla, intentar el login local
-                                    val account = accountRepo.findAccount(email.trim(), password)
-                                    delay(300) // small UX delay
-                                    if (account != null) {
-                                        // GUardar un nuevo local-token para esta cuenta para que AuthInterceptor lo use
-                                        sessionManager.saveAuthToken("local-token-${account.email}")
+                // Botón de Iniciar Sesión y CircularProgressIndicator
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp), // Damos una altura fija al Box para evitar saltos de UI
+                    contentAlignment = Alignment.Center
+                ) {
+                    // ***** CAMBIO CLAVE AQUÍ *****
+                    // Usamos un simple if/else en lugar de AnimatedVisibility
+                    if (isLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        Button(
+                            onClick = {
+                                isLoading = true
+                                scope.launch {
+                                    //Primer intento de remote login (acceso remoto)
+                                    val loginReq = LoginRequest(username = email.trim(), password = password)
+                                    val remoteResult = userRepo.login(loginReq)
 
-                                        // Token local para demostración (demo) de autenticación (auth) local (no autentica contra el servidor)
+                                    if (remoteResult.isSuccess) {
+                                        // Esperar hasta que el token guardado en SessionManager coincida con el devuelto
+                                        val returnedToken = remoteResult.getOrNull()?.accessToken
+                                        if (!returnedToken.isNullOrEmpty()) {
+                                            // Suspender hasta que DataStore devuelva el mismo token (evita problemas de carrera (race))
 
-                                        //Usa remote login para un perfil guardado en el servidor; login local permite demostración offline/demo
+                                            sessionManager.authToken.first { it == returnedToken }
+                                        }
+
+                                        // Remote login exitoso -> navegar a perfil
                                         navController.navigate("profile") {
                                             popUpTo("home") { inclusive = false }
                                         }
                                     } else {
-                                        snackbarHostState.showSnackbar("Error: Usuario o contraseña incorrectos.")
-                                    }
-                                }
+                                        // Si el remote login falla, intentar el login local
+                                        val account = accountRepo.findAccount(email.trim(), password)
+                                        delay(300) // small UX delay
+                                        if (account != null) {
+                                            // GUardar un nuevo local-token para esta cuenta para que AuthInterceptor lo use
+                                            sessionManager.saveAuthToken("local-token-${'$'}{account.email}")
 
-                                isLoading = false
-                            }
-                        },
-                        enabled = isFormValid,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Iniciar Sesión")
+                                            // Token local para demostración (demo) de autenticación (auth) local (no autentica contra el servidor)
+
+                                            //Usa remote login para un perfil guardado en el servidor; login local permite demostración offline/demo
+                                            navController.navigate("profile") {
+                                                popUpTo("home") { inclusive = false }
+                                            }
+                                        } else {
+                                            snackbarHostState.showSnackbar("Error: Usuario o contraseña incorrectos.")
+                                        }
+                                    }
+
+                                    isLoading = false
+                                }
+                            },
+                            enabled = isFormValid,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
+                        ) {
+                            Text("Iniciar Sesión")
+                        }
                     }
                 }
             }

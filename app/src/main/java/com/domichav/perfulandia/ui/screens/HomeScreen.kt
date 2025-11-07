@@ -120,7 +120,7 @@ fun HomeScreen(navController: NavController) {
                         scrolledContainerColor = Color.Transparent
                     ),
                     modifier = Modifier
-                        .height(150.dp),
+                        .height(150.dp)
                 )
             },
             //bottomBar = {

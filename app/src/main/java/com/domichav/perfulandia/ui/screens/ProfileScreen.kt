@@ -1,5 +1,6 @@
 package com.domichav.perfulandia.ui.screens  // ⚠️ Cambia esto por tu paquete
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +56,16 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.domichav.perfulandia.ui.components.ImagePickerDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
+import com.domichav.perfulandia.ui.theme.ImperialScript
+import com.domichav.perfulandia.R
+import com.domichav.perfulandia.ui.theme.ButtonColor
 
 fun createImageUri(context: Context): Uri {
     // Crea un archivo en Pictures/ para que la cámara lo guarde
@@ -91,7 +103,7 @@ fun ProfileScreen(
         onLogout = onLogout
     )
 }
-@OptIn(ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreenContent(
     state: ProfileUiState,
@@ -118,6 +130,7 @@ fun ProfileScreenContent(
             }
         )
     }
+
     // --- Lógica de la Cámara y Permisos ---
     val context = LocalContext.current
     val viewModel: ProfileViewModel = viewModel() // Para llamar a updateAvatar
@@ -191,157 +204,184 @@ fun ProfileScreenContent(
     }
 
     // --- Fin de la Lógica de Cámara y Permisos ---
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        when {
-            // Estado: Cargando
-            state.isLoading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+    // Put the background image at the root Box so it shows behind the profile UI
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.brown3),
+            contentDescription = "Background Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        // Top App Bar overlay to match other screens (transparent, big title)
+        CenterAlignedTopAppBar(
+            title = { Text(text = "Profile", modifier = Modifier.scale(2.5f), fontFamily = ImperialScript) },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color.Transparent,
+                scrolledContainerColor = Color.Transparent
+            ),
+            modifier = Modifier.height(150.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .padding(top = 150.dp) // Offset content so it doesn't sit under the TopAppBar
+        ) {
+            when {
+                // Estado: Cargando
+                state.isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                // Estado: Error
+                state.error != null -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "❌ Error",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = state.error,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = onRefresh) {
+                            Text("Reintentar")
+                        }
+                    }
+                }
+
+                // Estado: Datos cargados
+                else -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.TopCenter),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Perfil de Usuario",
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Avatar: Mostrar imagen si existe, sino placeholder. Click abre selector
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surface)
+                                .clickable { showImagePickerDialog = true }
+                                .padding(4.dp)
+                        ) {
+                            val avatarSize = 120.dp
+                            if (state.avatarUri != null) {
+                                AsyncImage(
+                                    model = state.avatarUri,
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(avatarSize)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                // Ícono Placeholder
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Placeholder avatar",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .height(avatarSize)
+                                        .fillMaxWidth()
+                                        .clip(CircleShape)
+                                        .padding(24.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Nombre
+                        Card(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "Nombre",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = state.userName,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+
+                        // Email
+                        Card(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "Email",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = state.userEmail,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = onRefresh,
+                            colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
+                        ) {
+                            Text("Refrescar")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = { showLogoutDialog = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
+                        ) {
+                            Text("Cerrar Sesión")
+                        }
+                    }
+                }
+            }
+
+            // Image picker dialog (camera / gallery) se muestra cuando se toca el avatar
+            if (showImagePickerDialog) {
+                ImagePickerDialog(
+                    onDismiss = { showImagePickerDialog = false },
+                    onCameraClick = {
+                        showImagePickerDialog = false
+                        launchCamera()
+                    },
+                    onGalleryClick = {
+                        showImagePickerDialog = false
+                        launchGallery()
+                    }
                 )
             }
-
-            // Estado: Error
-            state.error != null -> {
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "❌ Error",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = state.error,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = onRefresh) {
-                        Text("Reintentar")
-                    }
-                }
-            }
-
-            // Estado: Datos cargados
-            else -> {
-                Column(
-                    modifier = Modifier.align(Alignment.TopCenter),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Perfil de Usuario",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Avatar: Mostrar imagen si existe, sino placeholder. Click abre selector
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surface)
-                            .clickable { showImagePickerDialog = true }
-                            .padding(4.dp)
-                    ) {
-                        val avatarSize = 120.dp
-                        if (state.avatarUri != null) {
-                            AsyncImage(
-                                model = state.avatarUri,
-                                contentDescription = "Avatar",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(avatarSize)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            // Ícono Placeholder
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Placeholder avatar",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .height(avatarSize)
-                                    .fillMaxWidth()
-                                    .clip(CircleShape)
-                                    .padding(24.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Nombre
-                    Card(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Nombre",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = state.userName,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                    }
-
-                    // Email
-                    Card(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Email",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = state.userEmail,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(onClick = onRefresh) {
-                        Text("Refrescar")
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Button(onClick = { showLogoutDialog = true }) {
-                        Text("Cerrar Sesión")
-                    }
-                }
-            }
-        }
-
-        // Image picker dialog (camera / gallery) se muestra cuando se toca el avatar
-        if (showImagePickerDialog) {
-            ImagePickerDialog(
-                onDismiss = { showImagePickerDialog = false },
-                onCameraClick = {
-                    showImagePickerDialog = false
-                    launchCamera()
-                },
-                onGalleryClick = {
-                    showImagePickerDialog = false
-                    launchGallery()
-                }
-            )
         }
     }
 }
