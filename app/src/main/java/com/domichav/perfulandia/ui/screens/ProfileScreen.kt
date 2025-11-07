@@ -41,6 +41,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -72,7 +74,8 @@ fun createImageUri(context: Context): Uri {
 
 @Composable
 fun ProfileScreen(
-    viewModel: ProfileViewModel = viewModel()
+    viewModel: ProfileViewModel = viewModel(),
+    onLogout: () -> Unit
 ) {
     // Observar el estado
     val state by viewModel.uiState.collectAsState()
@@ -84,15 +87,37 @@ fun ProfileScreen(
 
     ProfileScreenContent(
         state = state,
-        onRefresh = { viewModel.loadUser() }
+        onRefresh = { viewModel.loadUser() },
+        onLogout = onLogout
     )
 }
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ProfileScreenContent(
     state: ProfileUiState,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onLogout: () -> Unit
 ) {
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Cerrar Sesión") },
+            text = { Text("¿Estás seguro?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout() // Acción real de logout
+                    }
+                ) { Text("Sí") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) { Text("No") }
+            }
+        )
+    }
     // --- Lógica de la Cámara y Permisos ---
     val context = LocalContext.current
     val viewModel: ProfileViewModel = viewModel() // Para llamar a updateAvatar
@@ -294,6 +319,12 @@ fun ProfileScreenContent(
                     Button(onClick = onRefresh) {
                         Text("Refrescar")
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(onClick = { showLogoutDialog = true }) {
+                        Text("Cerrar Sesión")
+                    }
                 }
             }
         }
@@ -321,7 +352,8 @@ fun ProfileScreenPreview() {
     MaterialTheme {
         ProfileScreenContent(
             state = ProfileUiState(userName = "Usuario de Prueba", userEmail = "prueba@email.com"),
-            onRefresh = {}
+            onRefresh = {},
+            onLogout = {}
         )
     }
 }
@@ -332,7 +364,8 @@ fun ProfileScreenPreview_Loading() {
     MaterialTheme {
         ProfileScreenContent(
             state = ProfileUiState(isLoading = true),
-            onRefresh = {}
+            onRefresh = {},
+            onLogout = {}
         )
     }
 }
@@ -343,7 +376,8 @@ fun ProfileScreenPreview_Error() {
     MaterialTheme {
         ProfileScreenContent(
             state = ProfileUiState(error = "No se pudo cargar el perfil"),
-            onRefresh = {}
+            onRefresh = {},
+            onLogout = {}
         )
     }
 }

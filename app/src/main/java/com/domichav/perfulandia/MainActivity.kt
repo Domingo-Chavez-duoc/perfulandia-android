@@ -36,8 +36,11 @@ class MainActivity : ComponentActivity() {
                         RegisterScreen(navController = navController)
                     }
                     composable("profile") {
-                        // ProfileScreen maneja su propio ViewModel y estado
-                        ProfileScreen()
+                        ProfileScreen(onLogout = {
+                            navController.navigate("home") {
+                                popUpTo("home") { inclusive = true }
+                            }
+                        })
                     }
                 }
             }
