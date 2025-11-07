@@ -95,7 +95,7 @@ fun HomeScreen(navController: NavController) {
     Box(modifier = Modifier.fillMaxSize()) {
         // The background image
         Image(
-            painter = painterResource(id = R.drawable.brown2), // Replace with your background image resource
+            painter = painterResource(id = R.drawable.brown3), // Replace with your background image resource
             contentDescription = "Background Image",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop // Or ContentScale.FillBounds, etc.
