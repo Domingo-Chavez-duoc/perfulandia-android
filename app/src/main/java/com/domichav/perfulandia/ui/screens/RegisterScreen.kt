@@ -51,6 +51,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
+    val accountRepo = remember { com.domichav.perfulandia.repository.AccountRepository(context) }
 
     // Cuando registration sea exitoso, espera a que el token sea persistido en SessionManager, luego navega a profile.
     LaunchedEffect(uiState.success) {
@@ -58,6 +59,20 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
             // Se supende hasta que un token no nulo y que no esté vació este disponible (evita el racing de navegar a profile lo que causaba 401).
             val token = sessionManager.authToken.first { !it.isNullOrEmpty() }
             if (!token.isNullOrEmpty()) {
+                // Additionally wait for the registered email account to be persisted (if available)
+                val registeredEmail = uiState.registeredEmail
+                if (!registeredEmail.isNullOrEmpty()) {
+                    try {
+                        // Poll until the account repo contains the newly registered account (or timeout)
+                        var attempts = 0
+                        while (attempts < 10) {
+                            val existing = accountRepo.getAllAccountsOnce().firstOrNull { it.email.trim().lowercase() == registeredEmail }
+                            if (existing != null) break
+                            attempts++
+                            kotlinx.coroutines.delay(100)
+                        }
+                    } catch (_: Exception) {}
+                }
                 navController.navigate("profile") {
                     popUpTo("home") { inclusive = false }
                 }

@@ -19,7 +19,8 @@ import kotlinx.coroutines.launch
 data class RegisterUiState(
     val isLoading: Boolean = false,
     val success: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val registeredEmail: String? = null
 )
 
 /**
@@ -55,11 +56,11 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
             //Updatea el estado de la UI basado en el resultado del repository
             result.fold(
                 onSuccess = {
+                    val normalizedEmail = email.trim().lowercase()
+                    accountRepository.saveAccount(Account(name = name, email = normalizedEmail, password = password))
 
-                    accountRepository.saveAccount(Account(name = name, email = email, password = password))
-
-                    //On success, tenemos guardado el token a través del repository. Solo indicamos success
-                    _uiState.update { it.copy(isLoading = false, success = true) }
+                    //On success, tenemos guardado el token a través del repository. Indicar success y email registrado
+                    _uiState.update { it.copy(isLoading = false, success = true, registeredEmail = normalizedEmail) }
                 },
                 onFailure = { exception ->
                     // On failure, updatea el estado de la UI con el error message

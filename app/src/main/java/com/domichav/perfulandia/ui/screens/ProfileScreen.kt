@@ -58,7 +58,6 @@ import com.domichav.perfulandia.ui.components.ImagePickerDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
@@ -108,9 +107,11 @@ fun ProfileScreen(
 fun ProfileScreenContent(
     state: ProfileUiState,
     onRefresh: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    viewModel: ProfileViewModel = viewModel()
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showDeleteAvatarDialog by remember { mutableStateOf(false) }
 
     if (showLogoutDialog) {
         AlertDialog(
@@ -131,9 +132,28 @@ fun ProfileScreenContent(
         )
     }
 
+    if (showDeleteAvatarDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAvatarDialog = false },
+            title = { Text("Eliminar Avatar") },
+            text = { Text("¿Deseas eliminar la foto de perfil? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteAvatarDialog = false
+                        // Llama a updateAvatar(null) para borrar el avatar y su archivo asociado
+                        viewModel.updateAvatar(null)
+                    }
+                ) { Text("Eliminar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAvatarDialog = false }) { Text("Cancelar") }
+            }
+        )
+    }
+
     // --- Lógica de la Cámara y Permisos ---
     val context = LocalContext.current
-    val viewModel: ProfileViewModel = viewModel() // Para llamar a updateAvatar
 
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     var showImagePickerDialog by remember { mutableStateOf(false) }
@@ -354,6 +374,16 @@ fun ProfileScreenContent(
                             colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
                         ) {
                             Text("Refrescar")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Button to remove avatar (asks for confirmation)
+                        Button(
+                            onClick = { showDeleteAvatarDialog = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
+                        ) {
+                            Text("Eliminar Avatar")
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))

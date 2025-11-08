@@ -8,23 +8,27 @@ import com.google.gson.annotations.SerializedName
  */
 data class LoginResponse(
     @SerializedName("id")
-    val id: Int,
+    val id: Int? = null,
 
     @SerializedName("username")
-    val username: String,
+    val username: String? = null,
 
     @SerializedName("email")
-    val email: String,
+    val email: String? = null,
 
     @SerializedName("firstName")
-    val firstName: String,
+    val firstName: String? = null,
 
     @SerializedName("lastName")
-    val lastName: String,
+    val lastName: String? = null,
 
+    // Algunos servidores devuelven 'authToken', otros 'accessToken'. Hacer ambos anulables y preferir authToken cuando esté presente.
     @SerializedName("accessToken")
-    val accessToken: String,  // 🔑 TOKEN JWT - Lo guardamos en SessionManager
+    val accessToken: String? = null,
+
+    @SerializedName("authToken")
+    val authToken: String? = null,
 
     @SerializedName("refreshToken")
-    val refreshToken: String?  // Opcional - Para renovar el token
+    val refreshToken: String? = null  // Opcional - Para renovar el token
 )

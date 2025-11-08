@@ -31,10 +31,12 @@ class UserRepository(application: Application) {
         return try {
             val response = authApiService.login(request)
 
-            val token = response.accessToken
+            // Prefer authToken (README indicates server returns authToken) then fallback to accessToken
+            val token = response.authToken ?: response.accessToken
+
             if (token.isNullOrEmpty()) {
-                Log.w(TAG, "login: no accessToken in response")
-                return Result.failure(Exception("No access token returned from login API"))
+                Log.w(TAG, "login: no token in response; response=$response")
+                return Result.failure(Exception("No auth token returned from login API"))
             }
 
             Log.d(TAG, "login: saving token=$token")
@@ -101,6 +103,13 @@ class UserRepository(application: Application) {
                     )
                     return Result.success(localUser)
                 } else {
+                    // Clear the stale local token so the app can recover to a login state
+                    try {
+                        sessionManager.saveAuthToken("")
+                    } catch (_: Exception) {
+                        // ignore
+                    }
+                    Log.w(TAG, "getProfile: local token present but account not found for email=$email; cleared token")
                     return Result.failure(Exception("Local account not found for token"))
                 }
             }

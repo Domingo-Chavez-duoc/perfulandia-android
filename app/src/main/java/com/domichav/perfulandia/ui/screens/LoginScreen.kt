@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -159,12 +158,13 @@ fun LoginScreen(navController: NavController) {
                                 isLoading = true
                                 scope.launch {
                                     //Primer intento de remote login (acceso remoto)
-                                    val loginReq = LoginRequest(username = email.trim(), password = password)
+                                    val loginReq = LoginRequest(email = email.trim(), password = password)
                                     val remoteResult = userRepo.login(loginReq)
 
                                     if (remoteResult.isSuccess) {
                                         // Esperar hasta que el token guardado en SessionManager coincida con el devuelto
-                                        val returnedToken = remoteResult.getOrNull()?.accessToken
+                                        // Some servers return 'authToken' while others use 'accessToken'. Wait for whichever was returned.
+                                        val returnedToken = remoteResult.getOrNull()?.authToken ?: remoteResult.getOrNull()?.accessToken
                                         if (!returnedToken.isNullOrEmpty()) {
                                             // Suspender hasta que DataStore devuelva el mismo token (evita problemas de carrera (race))
 
@@ -176,12 +176,20 @@ fun LoginScreen(navController: NavController) {
                                             popUpTo("home") { inclusive = false }
                                         }
                                     } else {
+                                        // Show remote error message to assist debugging (e.g., invalid credentials, server error)
+                                        val remoteErrorMsg = remoteResult.exceptionOrNull()?.message ?: "Error en autenticación remota"
+                                        snackbarHostState.showSnackbar("Remote login failed: $remoteErrorMsg")
+
                                         // Si el remote login falla, intentar el login local
                                         val account = accountRepo.findAccount(email.trim(), password)
                                         delay(300) // small UX delay
                                         if (account != null) {
                                             // GUardar un nuevo local-token para esta cuenta para que AuthInterceptor lo use
-                                            sessionManager.saveAuthToken("local-token-${'$'}{account.email}")
+                                            val localToken = "local-token-${'$'}{account.email}"
+                                            sessionManager.saveAuthToken(localToken)
+
+                                            // Esperar hasta que DataStore devuelva el token guardado (evita race conditions)
+                                            sessionManager.authToken.first { it == localToken }
 
                                             // Token local para demostración (demo) de autenticación (auth) local (no autentica contra el servidor)
 

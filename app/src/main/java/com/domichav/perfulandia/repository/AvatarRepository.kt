@@ -18,42 +18,73 @@ private val Context.avatarDataStore: DataStore<Preferences> by preferencesDataSt
 class AvatarRepository(private val context: Context) {
 
     companion object {
-        // Key para almacenar el URI del avatar en DataStore
-        private val AVATAR_URI_KEY = stringPreferencesKey("avatar_uri_key")
+        // Legacy single-key name kept for compatibility if needed
+        private const val LEGACY_KEY = "avatar_uri_key"
+    }
+
+    private fun keyForEmail(email: String): androidx.datastore.preferences.core.Preferences.Key<String> {
+        // Normalize the email to a safe key (simple approach: prefix)
+        val safeKey = "avatar_uri_${email.trim().lowercase()}"
+        return stringPreferencesKey(safeKey)
     }
 
     /**
-     * Obtiene el URI del avatar como Flow reactivo
-     * Emite cada vez que cambia el avatar guardado
+     * Obtiene el URI del avatar para un email específico como Flow reactivo
      */
-    fun getAvatarUri(): Flow<Uri?> {
+    fun getAvatarUriFor(email: String): Flow<Uri?> {
+        val key = keyForEmail(email)
         return context.avatarDataStore.data.map { preferences ->
-            preferences[AVATAR_URI_KEY]?.let { uriString ->
+            preferences[key]?.let { uriString ->
                 Uri.parse(uriString)
             }
         }
     }
 
     /**
-     * Guarda el URI del avatar en DataStore
-     * El cambio se persiste inmediatamente
+     * Guarda el URI del avatar para un email específico en DataStore
      */
-    suspend fun saveAvatarUri(uri: Uri?) {
+    suspend fun saveAvatarUriFor(email: String, uri: Uri?) {
+        val key = keyForEmail(email)
         if (uri != null) {
             context.avatarDataStore.edit { preferences ->
-                preferences[AVATAR_URI_KEY] = uri.toString()
+                preferences[key] = uri.toString()
             }
         } else {
-            clearAvatarUri()
+            context.avatarDataStore.edit { preferences ->
+                preferences.remove(key)
+            }
         }
     }
 
     /**
-     * Elimina el URI del avatar de DataStore
+     * Elimina el URI del avatar para un email específico
      */
-    suspend fun clearAvatarUri() {
+    suspend fun clearAvatarUriFor(email: String) {
+        val key = keyForEmail(email)
         context.avatarDataStore.edit { preferences ->
-            preferences.remove(AVATAR_URI_KEY)
+            preferences.remove(key)
+        }
+    }
+
+    // Backwards-compat helper: returns legacy single avatar (not per-account)
+    fun getLegacyAvatarUri(): Flow<Uri?> {
+        val key = stringPreferencesKey(LEGACY_KEY)
+        return context.avatarDataStore.data.map { preferences ->
+            preferences[key]?.let { Uri.parse(it) }
+        }
+    }
+
+    // Backwards-compat helper to save legacy avatar key
+    suspend fun saveLegacyAvatarUri(uri: Uri?) {
+        val key = stringPreferencesKey(LEGACY_KEY)
+        if (uri != null) {
+            context.avatarDataStore.edit { preferences ->
+                preferences[key] = uri.toString()
+            }
+        } else {
+            context.avatarDataStore.edit { preferences ->
+                preferences.remove(key)
+            }
         }
     }
 }

@@ -10,6 +10,10 @@ import kotlinx.coroutines.launch
 import android.net.Uri
 import kotlinx.coroutines.flow.update
 import com.domichav.perfulandia.repository.AvatarRepository
+import com.domichav.perfulandia.repository.AccountRepository
+import com.domichav.perfulandia.utils.copyUriToInternalStorage
+import kotlinx.coroutines.flow.first
+import java.io.File
 
 /**
  * Estado de la UI
@@ -28,9 +32,12 @@ data class ProfileUiState(
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
 
-    // Pasa el contexto de la aplicación a UserRepository
+    // Pasa el contexto de la aplicación a repositories
     private val repository = UserRepository(application)
     private val avatarRepository = AvatarRepository(application)
+    private val accountRepository = AccountRepository(application)
+
+    private val app: Application = application
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState
@@ -41,9 +48,11 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         loadUser()
 
         // Suscribe a cambios en la URI del avatar
+        // Keep legacy subscription for backwards compatibility (single avatar key)
         viewModelScope.launch {
-            avatarRepository.getAvatarUri().collect { uri ->
-                _uiState.update { it.copy(avatarUri = uri) }
+            avatarRepository.getLegacyAvatarUri().collect { uri ->
+                // Only set legacy avatar if we don't have a per-account avatar yet
+                _uiState.update { if (it.avatarUri == null) it.copy(avatarUri = uri) else it }
             }
         }
     }
@@ -69,6 +78,45 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                             userEmail = user.email
                         )
                     }
+                    // After we have the user's email, try to load per-account avatar from AccountRepository
+                    viewModelScope.launch {
+                        try {
+                            // 1) Check AccountRepository for stored avatarPath
+                            val accounts = accountRepository.getAllAccountsOnce()
+                            val account = accounts.firstOrNull { it.email.equals(user.email, ignoreCase = true) }
+                            if (account?.avatarPath != null) {
+                                // Use internal file path
+                                val file = File(account.avatarPath)
+                                if (file.exists()) {
+                                    _uiState.update { it.copy(avatarUri = Uri.fromFile(file)) }
+                                } else {
+                                    // File missing: clear stored avatarPath
+                                    accountRepository.updateAccountAvatar(user.email, null)
+                                    _uiState.update { it.copy(avatarUri = null) }
+                                }
+                            } else {
+                                // 2) no per-account avatar: try legacy avatar and migrate it to internal storage
+                                val legacy = avatarRepository.getLegacyAvatarUri().first()
+                                if (legacy != null) {
+                                    // Attempt to copy legacy URI content into app internal storage
+                                    val sanitized = user.email.replace("[^A-Za-z0-9]".toRegex(), "_")
+                                    val targetName = "avatar_${sanitized}.jpg"
+                                    val copiedPath = copyUriToInternalStorage(app, legacy, targetName)
+                                    if (copiedPath != null) {
+                                        accountRepository.updateAccountAvatar(user.email, copiedPath)
+                                        _uiState.update { it.copy(avatarUri = Uri.fromFile(File(copiedPath))) }
+                                    } else {
+                                        _uiState.update { it.copy(avatarUri = null) }
+                                    }
+                                } else {
+                                    _uiState.update { it.copy(avatarUri = null) }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            // ignore and continue without avatar
+                            _uiState.update { it.copy(avatarUri = null) }
+                        }
+                    }
                 },
                 onFailure = { exception ->
                     _uiState.update {
@@ -91,7 +139,43 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
         // Persistencia asíncrona del URI del avatar
         viewModelScope.launch {
-            avatarRepository.saveAvatarUri(uri)
+            val email = _uiState.value.userEmail
+            if (uri == null) {
+                // Clear avatar for this account
+                if (email.isNotBlank()) {
+                    // delete stored file if any
+                    val accounts = accountRepository.getAllAccountsOnce()
+                    val account = accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+                    account?.avatarPath?.let { path ->
+                        try { File(path).delete() } catch (_: Exception) {}
+                    }
+                    accountRepository.updateAccountAvatar(email, null)
+                } else {
+                    avatarRepository.saveLegacyAvatarUri(null)
+                }
+            } else {
+                // Copy the provided URI into internal storage and save path in Account
+                if (email.isNotBlank()) {
+                    val sanitized = email.replace("[^A-Za-z0-9]".toRegex(), "_")
+                    val targetName = "avatar_${sanitized}.jpg"
+                    val copiedPath = copyUriToInternalStorage(app, uri, targetName)
+                    if (copiedPath != null) {
+                        // remove previous file if different
+                        val accounts = accountRepository.getAllAccountsOnce()
+                        val account = accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+                        account?.avatarPath?.let { prev -> if (prev != copiedPath) try { File(prev).delete() } catch (_: Exception) {} }
+
+                        accountRepository.updateAccountAvatar(email, copiedPath)
+                        _uiState.update { it.copy(avatarUri = Uri.fromFile(File(copiedPath))) }
+                    } else {
+                        // fallback: save legacy uri string
+                        avatarRepository.saveLegacyAvatarUri(uri)
+                    }
+                } else {
+                    // No email known yet, save as legacy
+                    avatarRepository.saveLegacyAvatarUri(uri)
+                }
+            }
         }
     }
 }
