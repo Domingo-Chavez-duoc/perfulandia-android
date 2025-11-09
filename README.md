@@ -147,3 +147,7 @@ Repo del proyecto semestral de perfulandia para el ramo de apps moviles
   4. Usuario puede actualizar su foto de perfil desde cámara o galería.
   5. App solicita permisos si es necesario y maneja fallback si no se otorgan.
   6. Usuario ve la foto actualizada en su perfil.
+
+## 7. Consideraciones finales
+ - Se agregaron cambios de UI/UX para mejorar la experiencia del usuario, como animaciones y mejores transiciones entre pantallas.
+ - Se mejora la persistencia de avatar para que se mantenga en su usuario correspondiente.
