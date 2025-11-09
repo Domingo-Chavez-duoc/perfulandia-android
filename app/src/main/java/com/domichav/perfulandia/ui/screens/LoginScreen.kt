@@ -73,7 +73,7 @@ fun LoginScreen(navController: NavController) {
         }
     }
 
-    // Wrap with a Box that draws the same full-screen background image as HomeScreen
+    // Se utiliza Box para traer la misma imagen de fondo que en HomeScreen
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.brown3),
@@ -98,7 +98,7 @@ fun LoginScreen(navController: NavController) {
                     modifier = Modifier.height(150.dp)
                 )
             },
-            containerColor = Color.Transparent // make scaffold background transparent so the image shows
+            containerColor = Color.Transparent // Se crea un Scaffold con fondo transparente para que se vea la imagen
         ) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -163,7 +163,7 @@ fun LoginScreen(navController: NavController) {
 
                                     if (remoteResult.isSuccess) {
                                         // Esperar hasta que el token guardado en SessionManager coincida con el devuelto
-                                        // Some servers return 'authToken' while others use 'accessToken'. Wait for whichever was returned.
+                                        // Algunos servidores devuelven 'authToken' mientras que otros usan 'accessToken'. Esperar al que se haya devuelto.
                                         val returnedToken = remoteResult.getOrNull()?.authToken ?: remoteResult.getOrNull()?.accessToken
                                         if (!returnedToken.isNullOrEmpty()) {
                                             // Suspender hasta que DataStore devuelva el mismo token (evita problemas de carrera (race))
@@ -176,7 +176,7 @@ fun LoginScreen(navController: NavController) {
                                             popUpTo("home") { inclusive = false }
                                         }
                                     } else {
-                                        // Show remote error message to assist debugging (e.g., invalid credentials, server error)
+                                        // Muestra el mensaje de error remoto para ayudar en la depuración (por ejemplo, credenciales inválidas, error del servidor)
                                         val remoteErrorMsg = remoteResult.exceptionOrNull()?.message ?: "Error en autenticación remota"
                                         snackbarHostState.showSnackbar("Remote login failed: $remoteErrorMsg")
 

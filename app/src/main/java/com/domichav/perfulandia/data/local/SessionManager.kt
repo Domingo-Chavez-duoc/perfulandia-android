@@ -20,7 +20,7 @@ class SessionManager(context: Context) {
     private val dataStore = context.dataStore
 
     companion object {
-        // The key for storing the auth token in DataStore.
+        // Llave para almacenar el token de autenticación en DataStore.
         private val AUTH_TOKEN = stringPreferencesKey("auth_token")
     }
 

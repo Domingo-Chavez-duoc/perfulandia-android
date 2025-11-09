@@ -18,12 +18,12 @@ private val Context.avatarDataStore: DataStore<Preferences> by preferencesDataSt
 class AvatarRepository(private val context: Context) {
 
     companion object {
-        // Legacy single-key name kept for compatibility if needed
+        // Llave única heredada mantenida para compatibilidad si es necesario
         private const val LEGACY_KEY = "avatar_uri_key"
     }
 
     private fun keyForEmail(email: String): androidx.datastore.preferences.core.Preferences.Key<String> {
-        // Normalize the email to a safe key (simple approach: prefix)
+        // Normaliza el email para usarlo como llave
         val safeKey = "avatar_uri_${email.trim().lowercase()}"
         return stringPreferencesKey(safeKey)
     }
@@ -66,7 +66,7 @@ class AvatarRepository(private val context: Context) {
         }
     }
 
-    // Backwards-compat helper: returns legacy single avatar (not per-account)
+    // Ayuda de compatibilidad hacia atrás: devuelve el avatar único heredado (no por cuenta)
     fun getLegacyAvatarUri(): Flow<Uri?> {
         val key = stringPreferencesKey(LEGACY_KEY)
         return context.avatarDataStore.data.map { preferences ->
@@ -74,7 +74,7 @@ class AvatarRepository(private val context: Context) {
         }
     }
 
-    // Backwards-compat helper to save legacy avatar key
+    //Ayuda de compatibilidad hacia atrás para guardar la llave de avatar heredada
     suspend fun saveLegacyAvatarUri(uri: Uri?) {
         val key = stringPreferencesKey(LEGACY_KEY)
         if (uri != null) {

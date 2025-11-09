@@ -44,9 +44,9 @@ class AccountRepository(private val context: Context) {
 
     suspend fun saveAccount(account: Account) {
         val current = getAllAccountsOnce().toMutableList()
-        // Normalize incoming email
+        // Normaliza el email entrante
         val normalizedEmail = account.email.trim().lowercase()
-        // Replace existing by normalized email if exists, to avoid duplicates
+        // Reemplaza el existente por el email normalizado si existe, para evitar duplicados
         val index = current.indexOfFirst { it.email.trim().lowercase() == normalizedEmail }
         if (index >= 0) current[index] = account.copy(email = normalizedEmail) else current.add(account.copy(email = normalizedEmail))
         val json = gson.toJson(current)

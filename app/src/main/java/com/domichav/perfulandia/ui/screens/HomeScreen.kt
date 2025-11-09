@@ -95,14 +95,14 @@ fun HomeScreen(navController: NavController) {
     Box(modifier = Modifier.fillMaxSize()) {
         // The background image
         Image(
-            painter = painterResource(id = R.drawable.brown3), // Replace with your background image resource
+            painter = painterResource(id = R.drawable.brown3), // Se reemplaza por el recurso de imagen de fondo guardado
             contentDescription = "Background Image",
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop // Or ContentScale.FillBounds, etc.
+            contentScale = ContentScale.Crop // O ContentScale.FillBounds, etc
         )
 
         Scaffold(
-            // Make Scaffold background transparent to see the image
+            // Crea el Scaffold con fondo transparente para ver la imagen
             containerColor = Color.Transparent,
             topBar = {
                 CenterAlignedTopAppBar(
@@ -144,7 +144,7 @@ fun HomeScreen(navController: NavController) {
                     .padding(16.dp)
                     .background(color = Color.Transparent),
 
-                // The background modifier is removed from here to keep it transparent
+                // El modificador de fondo se elimina de aquí para mantenerlo transparente
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
 

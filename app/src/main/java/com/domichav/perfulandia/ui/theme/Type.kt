@@ -11,7 +11,7 @@ import com.domichav.perfulandia.R
 val ImperialScript = FontFamily(
     Font(R.font.imperialscript_regular, FontWeight.Normal)
 )
-// Set of Material typography styles to start with
+// Setea el estilo tipografico de la app
 val Typography = Typography(
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Default,

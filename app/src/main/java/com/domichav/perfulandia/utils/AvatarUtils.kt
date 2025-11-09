@@ -15,7 +15,7 @@ fun copyUriToInternalStorage(context: Context, uri: Uri, targetFileName: String)
         if (!avatarsDir.exists()) avatarsDir.mkdirs()
 
         val targetFile = File(avatarsDir, targetFileName)
-        // Overwrite if exists
+        // Se sobrescribe si ya existe
         val outputStream: OutputStream = targetFile.outputStream()
 
         inputStream.use { input ->

@@ -9,15 +9,15 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 /**
- * Objeto singleton para proporcionar una instancia de Retrofit configurada.
+ * Objeto singleton para proporcionar una instancia de Retrofit configurada
  */
 object RetrofitClient {
 
     private const val BASE_URL = "https://x8ki-letl-twmt.n7.xano.io/api:Rfm_61dW/"
 
     /**
-     * Crea y configura una instancia de servicio Retrofit.
-     * @param context El contexto de la aplicación se utiliza para iniciar el SessionManager.
+     * Crea y configura una instancia de servicio Retrofit
+     * @param context El contexto de la aplicación se utiliza para iniciar el SessionManager
      * @return Una configuración completa de la instancia [AuthApiService].
      */
     fun create(context: Context): AuthApiService {

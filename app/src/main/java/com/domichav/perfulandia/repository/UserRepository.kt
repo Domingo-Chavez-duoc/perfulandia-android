@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.first
  */
 class UserRepository(application: Application) {
 
-    // Create the API service using the app context
+    // Crea el servicio API usando el contexto de la aplicación
     private val authApiService: AuthApiService = RetrofitClient.create(application)
     private val sessionManager = SessionManager(application)
     private val app = application
@@ -84,18 +84,18 @@ class UserRepository(application: Application) {
      */
     suspend fun getProfile(): Result<UserResponse> {
         return try {
-            // Read current token synchronously
+            // Leer el token actual de forma sincrónica
             val token = sessionManager.authToken.first()
 
             if (token != null && token.startsWith("local-token-")) {
-                // Local token: extract the email and fetch the local account
+                // Token local: extraer el email y buscar la cuenta local
                 val email = token.removePrefix("local-token-")
                 val accountRepo = AccountRepository(app)
                 val accounts = accountRepo.getAllAccountsOnce()
                 val account = accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
 
                 if (account != null) {
-                    // Map local Account to UserResponse
+                    // Cuenta local encontrada, mapear a UserResponse
                     val localUser = UserResponse(
                         id = 0,
                         name = account.name,
@@ -103,18 +103,18 @@ class UserRepository(application: Application) {
                     )
                     return Result.success(localUser)
                 } else {
-                    // Clear the stale local token so the app can recover to a login state
+                    // Limpiar el token local obsoleto para que la app pueda recuperarse a un estado de login
                     try {
                         sessionManager.saveAuthToken("")
                     } catch (_: Exception) {
-                        // ignore
+                        // ignorar
                     }
                     Log.w(TAG, "getProfile: local token present but account not found for email=$email; cleared token")
                     return Result.failure(Exception("Local account not found for token"))
                 }
             }
 
-            // Otherwise call remote endpoint
+            // De otro modo, llamar al endpoint remoto
             val response = authApiService.getMe()
             Result.success(response)
         } catch (e: Exception) {

@@ -59,11 +59,11 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
             // Se supende hasta que un token no nulo y que no esté vació este disponible (evita el racing de navegar a profile lo que causaba 401).
             val token = sessionManager.authToken.first { !it.isNullOrEmpty() }
             if (!token.isNullOrEmpty()) {
-                // Additionally wait for the registered email account to be persisted (if available)
+                // Adicionalmente espera a que la cuenta de email registrado sea persistida (si está disponible)
                 val registeredEmail = uiState.registeredEmail
                 if (!registeredEmail.isNullOrEmpty()) {
                     try {
-                        // Poll until the account repo contains the newly registered account (or timeout)
+                        // Se enuesta hasta que el repositorio de cuentas contenga la cuenta recién registrada (o tiempo de espera)
                         var attempts = 0
                         while (attempts < 10) {
                             val existing = accountRepo.getAllAccountsOnce().firstOrNull { it.email.trim().lowercase() == registeredEmail }
@@ -94,20 +94,20 @@ fun RegisterScreenContent(
     uiState: RegisterUiState,
     onRegister: (String, String, String) -> Unit
 ) {
-    // Use rememberSaveable so values survive process recreation and configuration changes
+    // Usa rememberSaveable para que los valores sobrevivan a la recreación del proceso y cambios de configuración
     var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var confirmEmail by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var confirmPassword by rememberSaveable { mutableStateOf("") }
 
-    // Field-level validations
+    // Valicaciones a nivel de campo
     val isEmailFormatValid by remember(email) { mutableStateOf(android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) }
     val doEmailsMatch by remember(email, confirmEmail) { mutableStateOf(email == confirmEmail && email.isNotBlank()) }
     val isPasswordValid by remember(password) { mutableStateOf(password.length >= 6) } // change min length here
     val doPasswordsMatch by remember(password, confirmPassword) { mutableStateOf(password == confirmPassword && password.isNotBlank()) }
 
-    // Form is valid only when all checks pass
+    // La forma es válida solo cuando todas las verificaciones pasan
     val isFormValid by remember(name, isEmailFormatValid, doEmailsMatch, isPasswordValid, doPasswordsMatch) {
         mutableStateOf(
             name.isNotBlank() &&
@@ -118,7 +118,7 @@ fun RegisterScreenContent(
         )
     }
 
-    // Wrap with a Box that draws the same full-screen background image as HomeScreen
+    // Nos trae la mismsa imagen de fondo que HomeScreen para consistencia visual
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.brown3),
@@ -207,7 +207,7 @@ fun RegisterScreenContent(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Button enabled only when form is valid. Form is hidden when uiState.isLoading is true.
+                    // Botón habilitado solo cuando el formulario es válido. El formulario está oculto cuando uiState.isLoading es verdadero.
                     Button(
                         onClick = { onRegister(name, email, password) },
                         enabled = isFormValid,

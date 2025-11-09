@@ -68,7 +68,7 @@ import com.domichav.perfulandia.ui.theme.ButtonColor
 
 fun createImageUri(context: Context): Uri {
     // Crea un archivo en Pictures/ para que la cámara lo guarde
-    // matches the <external-files-path path="Pictures/" /> declared in file_paths.xml
+    // Matchea el <external-files-path path="Pictures/" /> declarado en file_paths.xml
     val picturesDir = context.getExternalFilesDir("Pictures")
     val file = File.createTempFile(
         "JPEG_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}_",
@@ -224,7 +224,8 @@ fun ProfileScreenContent(
     }
 
     // --- Fin de la Lógica de Cámara y Permisos ---
-    // Put the background image at the root Box so it shows behind the profile UI
+
+    // Pone la imagen de fondo en el Box raíz para que esté detrás de la UI del perfil
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.brown3),
@@ -233,7 +234,7 @@ fun ProfileScreenContent(
             contentScale = ContentScale.Crop
         )
 
-        // Top App Bar overlay to match other screens (transparent, big title)
+        // Se deja TopAppBar aquí para que esté sobre la imagen de fondo (transparente y grande)
         CenterAlignedTopAppBar(
             title = { Text(text = "Profile", modifier = Modifier.scale(2.5f), fontFamily = ImperialScript) },
             colors = TopAppBarDefaults.topAppBarColors(
@@ -247,7 +248,7 @@ fun ProfileScreenContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
-                .padding(top = 150.dp) // Offset content so it doesn't sit under the TopAppBar
+                .padding(top = 150.dp) // Se desplaza el contenido para que no quede debajo del TopAppBar
         ) {
             when {
                 // Estado: Cargando
@@ -378,7 +379,7 @@ fun ProfileScreenContent(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Button to remove avatar (asks for confirmation)
+                        // Botón para eliminar avatar (pide confirmación)
                         Button(
                             onClick = { showDeleteAvatarDialog = true },
                             colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
