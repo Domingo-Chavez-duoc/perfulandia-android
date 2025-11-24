@@ -15,6 +15,18 @@ data class UserDto(
     @SerializedName("email")
     val email: String,
 
+    @SerializedName("role")
+    val role: String,
+
+    @SerializedName("phone")
+    val phone: String,
+
+    @SerializedName("location")
+    val location: String,
+
+    @SerializedName("address")
+    val address: String,
+
     @SerializedName("firstName")
     val firstName: String,
 
