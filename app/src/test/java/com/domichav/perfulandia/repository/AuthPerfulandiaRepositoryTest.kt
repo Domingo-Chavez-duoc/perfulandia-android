@@ -1,408 +1,174 @@
 package com.domichav.perfulandia.repository
 
-import android.content.Context
-import android.content.SharedPreferences
+import android.app.Application
+import com.domichav.perfulandia.data.local.Account
+import com.domichav.perfulandia.data.local.SessionManager
 import com.domichav.perfulandia.data.remote.api.AuthApiService
-import com.domichav.perfulandia.data.remote.dto.*
-//import com.domichav.perfulandia.model.User
+import com.domichav.perfulandia.data.remote.dto.LoginRequest
+import com.domichav.perfulandia.data.remote.dto.LoginResponse
+import com.domichav.perfulandia.data.remote.dto.SignupRequest
+import com.domichav.perfulandia.data.remote.dto.SignupResponse
+import com.domichav.perfulandia.data.remote.dto.UserResponse
 import io.mockk.*
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import retrofit2.HttpException
 import retrofit2.Response
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * Pruebas unitarias para AuthSaborLocalRepository
- *
- * Cubre:
- * - Login exitoso
- * - Login con credenciales inválidas
- * - Registro exitoso
- * - Registro con email duplicado
- * - Creación de productor
- * - Obtener todos los usuarios
- */
+class UserRepositoryTest {
 
-class AuthPerfulandiaRepositoryTest {
-    // Mocks
-    private lateinit var mockContext: Context
+    private lateinit var mockApplication: Application
     private lateinit var mockApiService: AuthApiService
-    private lateinit var mockSharedPreferences: SharedPreferences
-    private lateinit var mockEditor: SharedPreferences.Editor
 
-    // SUT (System Under Test)
-    private lateinit var repository: UserRepository //AuthPerfulandiaRepository ??????? preguntar robert
+    private lateinit var repository: UserRepository
 
     @Before
     fun setup() {
-        // Crear mocks
-        mockContext = mockk(relaxed = true)
+        mockApplication = mockk(relaxed = true)
         mockApiService = mockk()
-        mockSharedPreferences = mockk(relaxed = true)
-        mockEditor = mockk(relaxed = true)
 
-        // Configurar comportamiento de SharedPreferences
-        every { mockContext.getSharedPreferences(any(), any()) } returns mockSharedPreferences
-        every { mockSharedPreferences.edit() } returns mockEditor
-        every { mockEditor.putString(any(), any()) } returns mockEditor
-        every { mockEditor.apply() } just Runs
-        every { mockEditor.clear() } returns mockEditor
+        // Mock constructors for dependencies created inside UserRepository
+        mockkConstructor(SessionManager::class)
+        mockkConstructor(AccountRepository::class)
 
-        // Mockear RetrofitClient para que use nuestro mock
         mockkObject(com.domichav.perfulandia.data.remote.RetrofitClient)
         every { com.domichav.perfulandia.data.remote.RetrofitClient.create(any()) } returns mockApiService
 
-        // Crear instancia del repository
-        repository = UserRepository(
-            authApiService = mockApiService,
-            context = mockContext)
+        repository = UserRepository(mockApplication)
     }
 
     @After
     fun teardown() {
-        // Limpiar todos los mocks
         unmockkAll()
     }
 
     // ==================== LOGIN TESTS ====================
 
     @Test
-    fun `login exitoso debe retornar Success con User`() = runTest {
-        // Given - Preparar datos de prueba
-        val email = "test@example.com"
-        val password = "password123"
-
-        val userDto = UserDto(
-            id = 123,
-            username = "Test User",
-            email = email,
-            role = "CLIENTE",
-            phone = "123456789",
-            location = "Santiago",
-            address = "Calle Falsa 123",
-            firstName = "Moises",
-            lastName = "Rodriguez"
-        )
-
-        val authData = AuthPerfulandiaData(
-            user = userDto,
-            accessToken = "mock_token_12345"
-        )
-
-        val apiResponse = ApiResponse(
-            success = true,
-            message = "Login exitoso",
-            data = authData
-        )
-
-        val response = Response.success(apiResponse)
-
-        // Configurar mock para retornar respuesta exitosa
-        coEvery {
-            mockApiService.login(
-                LoginRequest(email, password)
-            )
-        } returns response
-
-        // When - Ejecutar login
-        val result = repository.login(email, password)
-
-        // Then - Verificar resultado
-        assertTrue(result.isSuccess, "El resultado debe ser Success")
-
-        val user = result.getOrNull()
-        assertEquals(123, user?.id)
-        assertEquals("Test User", user?.username)
-        assertEquals(email, user?.email)
-        assertEquals("CLIENTE", user?.role)
-
-        // Verificar que se guardó el token
-        verify { mockEditor.putString("auth_token", "mock_token_12345") }
-        verify { mockEditor.putString("user_id", "user123") }
-        verify { mockEditor.apply() }
-    }
-
-    @Test
-    fun `login con credenciales inválidas debe retornar Failure`() = runTest {
+    fun `login with valid credentials returns success and saves token`() = runTest {
         // Given
-        val email = "wrong@example.com"
-        val password = "wrongpassword"
+        val loginRequest = LoginRequest("test@example.com", "password123")
+        val loginResponse = LoginResponse(authToken = "mock_token_12345", accessToken = null)
 
-        val response = Response.error<ApiResponse<AuthPerfulandiaData>>(
-            401,
-            okhttp3.ResponseBody.create(null, "")
-        )
-
-        coEvery {
-            mockApiService.login(any())
-        } returns response
+        coEvery { mockApiService.login(loginRequest) } returns loginResponse
+        coEvery { anyConstructed<SessionManager>().saveAuthToken(any()) } just runs
+        every { anyConstructed<SessionManager>().authToken } returns flowOf("mock_token_12345")
 
         // When
-        val result = repository.login(email, password)
+        val result = repository.login(loginRequest)
 
         // Then
-        assertTrue(result.isFailure, "El resultado debe ser Failure")
-        assertEquals(
-            "Credenciales inválidas",
-            result.exceptionOrNull()?.message
-        )
+        assertTrue(result.isSuccess, "Login result should be Success")
+        assertEquals(loginResponse, result.getOrNull())
+        coVerify { anyConstructed<SessionManager>().saveAuthToken("mock_token_12345") }
     }
 
     @Test
-    fun `login con error de red debe retornar Failure con mensaje de error`() = runTest {
+    fun `login with invalid credentials returns failure`() = runTest {
         // Given
-        coEvery {
-            mockApiService.login(any())
-        } throws Exception("Network error")
+        val loginRequest = LoginRequest("wrong@example.com", "wrongpassword")
+        val exception = HttpException(Response.error<LoginResponse>(401, mockk(relaxed = true)))
+
+        coEvery { mockApiService.login(loginRequest) } throws exception
 
         // When
-        val result = repository.login("test@example.com", "password")
+        val result = repository.login(loginRequest)
 
         // Then
-        assertTrue(result.isFailure)
-        assertTrue(
-            result.exceptionOrNull()?.message?.contains("Error de red") == true
-        )
+        assertTrue(result.isFailure, "Login result should be Failure")
+        assertTrue(result.exceptionOrNull() is HttpException)
     }
 
-    // ==================== REGISTER TESTS ====================
+    // ==================== REGISTER TESTS ===================
 
     @Test
-    fun `registro exitoso debe retornar Success con User`() = runTest {
+    fun `registration with valid data returns success and saves token`() = runTest {
         // Given
-        val nombre = "Nuevo Usuario"
-        val email = "nuevo@example.com"
-        val password = "password123"
+        val signupRequest = SignupRequest(name = "New User", email = "new@example.com", password = "password123")
+        val signupResponse = SignupResponse(authToken = "new_token_12345", accessToken = null)
 
-        val userDto = UserDto(
-            id = "newuser123",
-            nombre = nombre,
-            email = email,
-            role = "CLIENTE",
-            telefono = null,
-            ubicacion = null,
-            direccion = null
-        )
-
-        val authData = AuthSaborLocalData(
-            user = userDto,
-            accessToken = "new_token_12345"
-        )
-
-        val apiResponse = ApiResponse(
-            success = true,
-            data = authData
-        )
-
-        val response = Response.success(apiResponse)
-
-        coEvery {
-            mockApiService.register(any())
-        } returns response
+        coEvery { mockApiService.signup(signupRequest) } returns signupResponse
+        coEvery { anyConstructed<SessionManager>().saveAuthToken(any()) } just runs
+        every { anyConstructed<SessionManager>().authToken } returns flowOf("new_token_12345")
 
         // When
-        val result = repository.register(
-            nombre = nombre,
-            email = email,
-            password = password
-        )
+        val result = repository.register(signupRequest)
 
         // Then
-        assertTrue(result.isSuccess)
-        val user = result.getOrNull()
-        assertEquals(nombre, user?.nombre)
-        assertEquals(email, user?.email)
-        assertEquals("CLIENTE", user?.role)
+        assertTrue(result.isSuccess, "Registration result should be Success")
+        assertEquals(signupResponse, result.getOrNull())
+        coVerify { anyConstructed<SessionManager>().saveAuthToken("new_token_12345") }
     }
 
     @Test
-    fun `registro con email duplicado debe retornar Failure`() = runTest {
+    fun `registration with duplicate email returns failure`() = runTest {
         // Given
-        val response = Response.error<ApiResponse<AuthSaborLocalData>>(
-            409,
-            okhttp3.ResponseBody.create(null, "")
-        )
+        val signupRequest = SignupRequest(name = "Test", email = "existing@example.com", password = "password123")
+        val exception = HttpException(Response.error<SignupResponse>(409, mockk(relaxed = true)))
 
-        coEvery {
-            mockApiService.register(any())
-        } returns response
+        coEvery { mockApiService.signup(signupRequest) } throws exception
 
         // When
-        val result = repository.register(
-            nombre = "Test",
-            email = "existing@example.com",
-            password = "password123"
-        )
+        val result = repository.register(signupRequest)
 
         // Then
-        assertTrue(result.isFailure)
-        assertEquals(
-            "El email ya está registrado",
-            result.exceptionOrNull()?.message
-        )
+        assertTrue(result.isFailure, "Registration result should be Failure")
+        assertTrue(result.exceptionOrNull() is HttpException)
     }
 
-    // ==================== CREATE PRODUCTOR TESTS ====================
+    // ==================== GET PROFILE TESTS ====================
 
     @Test
-    fun `createProductorUser exitoso debe retornar Success`() = runTest {
+    fun `getProfile with remote token returns success`() = runTest {
         // Given
-        val userDto = UserDto(
-            id = "productor123",
-            nombre = "Productor Test",
-            email = "productor@example.com",
-            role = "PRODUCTOR",
-            telefono = "987654321",
-            ubicacion = "Valparaíso",
-            direccion = null
-        )
-
-        val authData = AuthSaborLocalData(
-            user = userDto,
-            accessToken = "productor_token"
-        )
-
-        val apiResponse = ApiResponse(
-            success = true,
-            data = authData
-        )
-
-        val response = Response.success(apiResponse)
-
-        coEvery {
-            mockApiService.createProductorUser(any())
-        } returns response
+        val userResponse = UserResponse(id = 1, name = "Test User", email = "test@example.com")
+        every { anyConstructed<SessionManager>().authToken } returns flowOf("some_remote_token")
+        coEvery { mockApiService.getMe() } returns userResponse
 
         // When
-        val result = repository.createProductorUser(
-            nombre = "Productor Test",
-            email = "productor@example.com",
-            password = "password123",
-            ubicacion = "Valparaíso",
-            telefono = "987654321"
-        )
+        val result = repository.getProfile()
 
         // Then
-        assertTrue(result.isSuccess)
-        val user = result.getOrNull()
-        assertEquals("PRODUCTOR", user?.role)
-        assertEquals("Valparaíso", user?.ubicacion)
+        assertTrue(result.isSuccess, "getProfile result should be Success")
+        assertEquals(userResponse, result.getOrNull())
     }
 
     @Test
-    fun `createProductorUser sin permisos debe retornar Failure`() = runTest {
-        // Given - Usuario no ADMIN
-        val response = Response.error<ApiResponse<AuthSaborLocalData>>(
-            403,
-            okhttp3.ResponseBody.create(null, "")
-        )
+    fun `getProfile with local token returns success`() = runTest {
+        // Given
+        val email = "local@example.com"
+        every { anyConstructed<SessionManager>().authToken } returns flowOf("local-token-$email")
 
-        coEvery {
-            mockApiService.createProductorUser(any())
-        } returns response
+        val mockAccount = Account(name = "Local User", email = email, password = "")
+        coEvery { anyConstructed<AccountRepository>().getAllAccountsOnce() } returns listOf(mockAccount)
 
         // When
-        val result = repository.createProductorUser(
-            nombre = "Test",
-            email = "test@example.com",
-            password = "password",
-            ubicacion = "Santiago",
-            telefono = "123456789"
-        )
+        val result = repository.getProfile()
 
         // Then
-        assertTrue(result.isFailure)
-        assertTrue(
-            result.exceptionOrNull()?.message?.contains("No tienes permisos") == true
-        )
+        assertTrue(result.isSuccess, "getProfile with local token should be Success")
+        val userResponse = result.getOrNull()
+        assertEquals("Local User", userResponse?.name)
+        assertEquals(email, userResponse?.email)
     }
 
-    // ==================== GET ALL USERS TESTS ====================
-
     @Test
-    fun `getAllUsers debe retornar lista de usuarios`() = runTest {
+    fun `getProfile with API error returns failure`() = runTest {
         // Given
-        val users = listOf(
-            UserDto(
-                id = "1",
-                nombre = "User 1",
-                email = "user1@example.com",
-                role = "CLIENTE",
-                telefono = null,
-                ubicacion = null,
-                direccion = null
-            ),
-            UserDto(
-                id = "2",
-                nombre = "User 2",
-                email = "user2@example.com",
-                role = "PRODUCTOR",
-                telefono = "123456789",
-                ubicacion = "Santiago",
-                direccion = null
-            )
-        )
-
-        val apiResponse = ApiResponse(
-            success = true,
-            data = users
-        )
-
-        val response = Response.success(apiResponse)
-
-        coEvery {
-            mockApiService.getAllUsers()
-        } returns response
+        val exception = Exception("API error")
+        every { anyConstructed<SessionManager>().authToken } returns flowOf("some_remote_token")
+        coEvery { mockApiService.getMe() } throws exception
 
         // When
-        val result = repository.getAllUsers()
+        val result = repository.getProfile()
 
         // Then
-        assertTrue(result.isSuccess)
-        val userList = result.getOrNull()
-        assertEquals(2, userList?.size)
-        assertEquals("User 1", userList?.get(0)?.nombre)
-        assertEquals("PRODUCTOR", userList?.get(1)?.role)
-    }
-
-    // ==================== SESSION TESTS ====================
-
-    @Test
-    fun `isLoggedIn debe retornar true cuando hay token`() {
-        // Given
-        every { mockSharedPreferences.getString("auth_token" வேண்ட
-                every { mockSharedPreferences.getString("auth_token", null) } returns "mock_token"
-
-            // When
-            val isLoggedIn = repository.isLoggedIn()
-
-            // Then
-            assertTrue(isLoggedIn)
-        }
-
-        @Test
-        fun `isLoggedIn debe retornar false cuando no hay token`() {
-            // Given
-            every { mockSharedPreferences.getString("auth_token", null) } returns null
-
-            // When
-            val isLoggedIn = repository.isLoggedIn()
-
-            // Then
-            assertTrue(!isLoggedIn)
-        }
-
-        @Test
-        fun `logout debe limpiar SharedPreferences`() {
-            // When
-            repository.logout()
-
-            // Then
-            verify { mockEditor.clear() }
-            verify { mockEditor.apply() }
-        }
+        assertTrue(result.isFailure, "getProfile result should be Failure")
+        assertEquals("API error", result.exceptionOrNull()?.message)
     }
 }
