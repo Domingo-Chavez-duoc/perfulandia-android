@@ -35,6 +35,7 @@ import com.domichav.perfulandia.R
 import com.domichav.perfulandia.ui.theme.ButtonColor
 import com.domichav.perfulandia.ui.theme.ImperialScript
 import com.domichav.perfulandia.viewmodel.LoginViewModel
+import androidx.compose.ui.platform.testTag
 
 /**
  * Pantalla de inicio de sesión que delega la lógica al LoginViewModel
@@ -130,7 +131,7 @@ fun LoginScreen(
                     label = { Text("Correo Electrónico") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().testTag("EmailField")
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -149,7 +150,7 @@ fun LoginScreen(
                             Icon(imageVector = image, contentDescription = description)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().testTag("PasswordField")
                 )
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -170,7 +171,7 @@ fun LoginScreen(
                                 loginViewModel.onLoginClicked(email.trim(), password)
                             },
                             enabled = isFormValid,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().testTag("LoginButton"),
                             colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
                         ) {
                             Text("Iniciar Sesión")

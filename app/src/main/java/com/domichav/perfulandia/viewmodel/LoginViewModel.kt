@@ -26,7 +26,7 @@ data class LoginUiState(
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     // Manually instantiate UserRepository, just like your other ViewModels
-    private val userRepository = UserRepository(application)
+    private var userRepository = UserRepository(application)
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
@@ -73,4 +73,13 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     fun onErrorMessageShown() {
         _uiState.update { it.copy(error = null) }
     }
+
+    /**
+     * Inyecta un UserRepository para propósitos de testing.
+     * Permite reemplazar la instancia real con un mock.
+     */
+    internal fun injectUserRepositoryForTest(repository: UserRepository) {
+        this.userRepository = repository
+    }
+
 }
