@@ -17,59 +17,69 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.graphics.Color
 import com.domichav.perfulandia.R
-import com.domichav.perfulandia.repository.AccountRepository
-import com.domichav.perfulandia.repository.UserRepository
-import com.domichav.perfulandia.data.remote.dto.LoginRequest
-import com.domichav.perfulandia.data.local.SessionManager
 import com.domichav.perfulandia.ui.theme.ButtonColor
 import com.domichav.perfulandia.ui.theme.ImperialScript
-import kotlinx.coroutines.flow.first
+import com.domichav.perfulandia.viewmodel.LoginViewModel
 
 /**
- * Pantalla de inicio de sesión con validación de formulario y simulación de llamada a API
+ * Pantalla de inicio de sesión que delega la lógica al LoginViewModel
  *
  * @param navController Controlador de navegación para redirigir tras un login exitoso
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(navController: NavController) {
-    // 1. Estados del formulario
+fun LoginScreen(
+    navController: NavController,
+    // 1. Inyectar el ViewModel directamente en el Composable
+    loginViewModel: LoginViewModel = viewModel()
+) {
+    // 2. Estados del formulario (se mantienen en la UI)
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
-    // 2. Estados de la UI para la carga y los mensajes
-    var isLoading by remember { mutableStateOf(false) }
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val accountRepo = remember { AccountRepository(context) }
-    val userRepo = remember { UserRepository(context.applicationContext as android.app.Application) }
-    val sessionManager = remember { SessionManager(context) }
+    // 3. Recolectar el estado de la UI desde el ViewModel
+    val uiState by loginViewModel.uiState.collectAsState()
 
-    // 3. Validación de campos usando 'derivedStateOf' para mayor eficiencia
+    // 4. Elementos de la UI que necesitan estado (Snackbar)
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // 5. Reaccionar a cambios en el estado del ViewModel (efectos secundarios)
+    LaunchedEffect(uiState) {
+        // Navegar en caso de éxito
+        if (uiState.loginSuccess) {
+            navController.navigate("profile") {
+                popUpTo("home") { inclusive = false }
+            }
+        }
+        // Mostrar error si existe
+        uiState.error?.let { errorMessage ->
+            snackbarHostState.showSnackbar(errorMessage)
+            // Informar al ViewModel que el error ya se mostró
+            loginViewModel.onErrorMessageShown()
+        }
+    }
+
+    // Validación de campos (sin cambios)
     val isFormValid by remember {
         derivedStateOf {
             android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-                    && password.length >= 6 // Como ejemplo: mínimo 6 caracteres
+                    && password.length >= 6
         }
     }
 
@@ -86,11 +96,13 @@ fun LoginScreen(navController: NavController) {
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text(
-                        text = "Login",
-                        modifier = Modifier.scale(2.5f),
-                        fontFamily = ImperialScript
-                    ) },
+                    title = {
+                        Text(
+                            text = "Login",
+                            modifier = Modifier.scale(2.5f),
+                            fontFamily = ImperialScript
+                        )
+                    },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
                         scrolledContainerColor = Color.Transparent
@@ -98,7 +110,7 @@ fun LoginScreen(navController: NavController) {
                     modifier = Modifier.height(150.dp)
                 )
             },
-            containerColor = Color.Transparent // Se crea un Scaffold con fondo transparente para que se vea la imagen
+            containerColor = Color.Transparent
         ) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -111,7 +123,7 @@ fun LoginScreen(navController: NavController) {
                 Text("Iniciar Sesión", style = MaterialTheme.typography.headlineLarge)
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Campo de Email
+                // Campo de Email (sin cambios)
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
@@ -122,7 +134,7 @@ fun LoginScreen(navController: NavController) {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Campo de Contraseña
+                // Campo de Contraseña (sin cambios)
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
@@ -145,65 +157,17 @@ fun LoginScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp), // Damos una altura fija al Box para evitar saltos de UI
+                        .height(48.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // ***** CAMBIO CLAVE AQUÍ *****
-                    // Usamos un simple if/else en lugar de AnimatedVisibility
-                    if (isLoading) {
+                    // 6. Usar el estado 'isLoading' del ViewModel
+                    if (uiState.isLoading) {
                         CircularProgressIndicator()
                     } else {
                         Button(
                             onClick = {
-                                isLoading = true
-                                scope.launch {
-                                    //Primer intento de remote login (acceso remoto)
-                                    val loginReq = LoginRequest(email = email.trim(), password = password)
-                                    val remoteResult = userRepo.login(loginReq)
-
-                                    if (remoteResult.isSuccess) {
-                                        // Esperar hasta que el token guardado en SessionManager coincida con el devuelto
-                                        // Algunos servidores devuelven 'authToken' mientras que otros usan 'accessToken'. Esperar al que se haya devuelto.
-                                        val returnedToken = remoteResult.getOrNull()?.authToken ?: remoteResult.getOrNull()?.accessToken
-                                        if (!returnedToken.isNullOrEmpty()) {
-                                            // Suspender hasta que DataStore devuelva el mismo token (evita problemas de carrera (race))
-
-                                            sessionManager.authToken.first { it == returnedToken }
-                                        }
-
-                                        // Remote login exitoso -> navegar a perfil
-                                        navController.navigate("profile") {
-                                            popUpTo("home") { inclusive = false }
-                                        }
-                                    } else {
-                                        // Muestra el mensaje de error remoto para ayudar en la depuración (por ejemplo, credenciales inválidas, error del servidor)
-                                        val remoteErrorMsg = remoteResult.exceptionOrNull()?.message ?: "Error en autenticación remota"
-                                        snackbarHostState.showSnackbar("Remote login failed: $remoteErrorMsg")
-
-                                        // Si el remote login falla, intentar el login local
-                                        val account = accountRepo.findAccount(email.trim(), password)
-                                        delay(300) // small UX delay
-                                        if (account != null) {
-                                            // GUardar un nuevo local-token para esta cuenta para que AuthInterceptor lo use
-                                            val localToken = "local-token-${'$'}{account.email}"
-                                            sessionManager.saveAuthToken(localToken)
-
-                                            // Esperar hasta que DataStore devuelva el token guardado (evita race conditions)
-                                            sessionManager.authToken.first { it == localToken }
-
-                                            // Token local para demostración (demo) de autenticación (auth) local (no autentica contra el servidor)
-
-                                            //Usa remote login para un perfil guardado en el servidor; login local permite demostración offline/demo
-                                            navController.navigate("profile") {
-                                                popUpTo("home") { inclusive = false }
-                                            }
-                                        } else {
-                                            snackbarHostState.showSnackbar("Error: Usuario o contraseña incorrectos.")
-                                        }
-                                    }
-
-                                    isLoading = false
-                                }
+                                // 7. Delegar TODA la lógica de negocio al ViewModel
+                                loginViewModel.onLoginClicked(email.trim(), password)
                             },
                             enabled = isFormValid,
                             modifier = Modifier.fillMaxWidth(),
@@ -221,5 +185,6 @@ fun LoginScreen(navController: NavController) {
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
+    // La preview ahora necesita el NavController
     LoginScreen(navController = rememberNavController())
 }
