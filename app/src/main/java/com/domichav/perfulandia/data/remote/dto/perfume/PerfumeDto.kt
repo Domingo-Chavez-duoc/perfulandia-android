@@ -1,24 +1,48 @@
 package com.domichav.perfulandia.data.remote.dto.perfume
 
 import com.google.gson.annotations.SerializedName
-
-/**
- * Objeto de transferencia de datos (DTO) que representa un perfume.
- */
+import java.util.Date
 
 data class PerfumeDto(
-    @SerializedName("id")
-    val id: Int,
+    @SerializedName("_id") // En NestJS/MongoDB se usa _id
+    val id: String,
 
     @SerializedName("nombre")
     val nombre: String,
 
+    @SerializedName("marca")
+    val marca: String,
+
     @SerializedName("descripcion")
-    val descripcion: String,
+    val descripcion: String?,
+
+    @SerializedName("precio")
+    val precio: Double,
+
+    @SerializedName("stock")
+    val stock: Int,
+
+    @SerializedName("genero")
+    val genero: String,
+
+    @SerializedName("tamaño")
+    val tamaño: String,
+
+    @SerializedName("fragancia")
+    val fragancia: String,
+
+    @SerializedName("categoriaId")
+    val categoriaId: String,
 
     @SerializedName("imagen")
-    val imagen: String,  // URL de la imagen del perfume
+    val imagen: String?,
 
     @SerializedName("imagenThumbnail")
-    val imagenThumbnail: String,  // URL de la miniatura de la imagen del perfume
+    val imagenThumbnail: String?,
+
+    @SerializedName("createdAt")
+    val createdAt: Date,
+
+    @SerializedName("updatedAt")
+    val updatedAt: Date
 )

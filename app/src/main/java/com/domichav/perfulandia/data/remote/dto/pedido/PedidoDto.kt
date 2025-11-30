@@ -1,29 +1,50 @@
 package com.domichav.perfulandia.data.remote.dto.pedido
 
 import com.google.gson.annotations.SerializedName
+import java.util.Date
 
 /**
- * DTO para la petición de creación de un nuevo pedido. * Corresponde a la clase CreatePedidoDto en el backend de NestJS.
- * Los campos opcionales pueden ser nulos si no se envían.
+ * Representa un objeto de Pedido tal como lo devuelve la API.
  */
-data class CreatePedidoRequest(
+data class PedidoResponseDto(
+    @SerializedName("_id")
+    val id: String,
+
     @SerializedName("cliente")
-    val cliente: String?,
+    val clienteId: String,
 
     @SerializedName("items")
-    val items: List<PedidoItemDto>,
+    val items: List<PedidoItemResponseDto>,
 
-    @SerializedName("direccionEntrega")
-    val direccionEntrega: String?,
+    @SerializedName("total")
+    val total: Double,
 
-    @SerializedName("notasEntrega")
-    val notasEntrega: String?
+    @SerializedName("estado")
+    val estado: String?,
+
+    @SerializedName("imagen")
+    val imagen: String?,
+
+    @SerializedName("imagenThumbnail")
+    val imagenThumbnail: String?,
+
+    @SerializedName("createdAt")
+    val createdAt: Date,
+
+    @SerializedName("updatedAt")
+    val updatedAt: Date
 )
 
-data class PedidoItemDto(
-    @SerializedName("producto")
-    val producto: String,
+/**
+ * Representa un item dentro de la respuesta de un pedido.
+ */
+data class PedidoItemResponseDto(
+    @SerializedName("perfume")
+    val perfumeId: String,
 
     @SerializedName("cantidad")
-    val cantidad: Int
+    val cantidad: Int,
+
+    @SerializedName("precio")
+    val precio: Double
 )
