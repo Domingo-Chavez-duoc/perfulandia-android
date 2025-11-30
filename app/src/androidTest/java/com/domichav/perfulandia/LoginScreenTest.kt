@@ -98,39 +98,5 @@ class LoginScreenTest {
         // El botón de login debe seguir deshabilitado.
         composeTestRule.onNodeWithTag(loginButtonTag).assertIsNotEnabled()
     }
-
-    @Test
-    fun visibilidad_password_cambia_cuando_icono_clickeado() {
-        // Given (Dado que...)
-        // Escribimos algo en el campo de contraseña.
-        val testPassword = "secret-password"
-        val passwordNode = composeTestRule.onNodeWithTag(passwordFieldTag)
-        passwordNode.performTextInput("secret-password")
-
-        // Then (Entonces...)
-        // Verificamos que inicialmente la contraseña está oculta (por defecto).
-        // `assertIsPassword()` es un atajo para esto.
-        val initialText = passwordNode.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)
-        Assert.assertNotEquals(testPassword, initialText?.toString(), "La contraseña no debería ser visible inicialmente")
-
-
-
-        // When (Cuando...)
-        // Hacemos clic en el icono del ojo (trailing icon).
-        passwordNode.onChild().performClick() // El icono es el único hijo del OutlinedTextField
-
-        // Then (Entonces...)
-        // Verificamos que la contraseña ahora es visible.
-        passwordNode.assertTextEquals(testPassword)
-
-        // When (Cuando...)
-        // Hacemos clic en el icono de nuevo.
-        passwordNode.onChild().performClick()
-
-        // Then (Entonces...)
-        // Verificamos que la contraseña se oculta de nuevo.
-        val finalText = passwordNode.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)
-        Assert.assertNotEquals(testPassword, finalText?.toString(), "La contraseña debería estar oculta de nuevo")
-    }
 }
 

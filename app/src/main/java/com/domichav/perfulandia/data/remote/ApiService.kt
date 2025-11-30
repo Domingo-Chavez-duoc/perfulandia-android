@@ -1,6 +1,8 @@
 package com.domichav.perfulandia.data.remote
 
 import com.domichav.perfulandia.data.remote.dto.*
+import com.domichav.perfulandia.data.remote.dto.user.UserDto
+import com.domichav.perfulandia.data.remote.dto.user.UsersResponse
 import retrofit2.http.*
 
 /**
