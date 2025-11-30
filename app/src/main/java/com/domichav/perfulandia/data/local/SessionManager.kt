@@ -43,3 +43,4 @@ class SessionManager(context: Context) {
         it[AUTH_TOKEN]
     }
 }
+
