@@ -93,12 +93,12 @@ fun ProfileScreen(
 
     // Cargar datos cuando la pantalla se abre
     LaunchedEffect(Unit) {
-        viewModel.loadUser()
+        viewModel.loadUserProfile()
     }
 
     ProfileScreenContent(
         state = state,
-        onRefresh = { viewModel.loadUser() },
+        onRefresh = { viewModel.loadUserProfile() },
         onLogout = onLogout
     )
 }
@@ -305,9 +305,9 @@ fun ProfileScreenContent(
                                 .padding(4.dp)
                         ) {
                             val avatarSize = 120.dp
-                            if (state.avatarUri != null) {
+                            if (state.avatarUrl != null) {
                                 AsyncImage(
-                                    model = state.avatarUri,
+                                    model = state.avatarUrl,
                                     contentDescription = "Avatar",
                                     modifier = Modifier
                                         .fillMaxWidth()

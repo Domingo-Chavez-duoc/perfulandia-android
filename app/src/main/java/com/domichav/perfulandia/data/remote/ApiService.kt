@@ -43,7 +43,15 @@ interface ApiService {
      * Corresponde a: GET /auth/profile
      */
     @GET("auth/profile")
-    suspend fun getMyProfile(): ApiResponse<ClienteProfileDto>
+    suspend fun getMyProfile(): ApiResponse<UserDto>
+
+    /**
+     * Sube una imagen para el perfil de un Cliente específico.
+     * Corresponde a: POST /cliente/{id}/upload-image*/
+    @Multipart
+    @POST("auth/avatar")
+    suspend fun uploadUserAvatar(@Part file: MultipartBody.Part): ApiResponse<UserDto>
+
 
     //----- RESEÑA ENDPOINTS -----//
 

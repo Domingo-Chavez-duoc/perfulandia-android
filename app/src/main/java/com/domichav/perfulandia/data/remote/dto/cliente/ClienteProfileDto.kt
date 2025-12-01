@@ -1,5 +1,6 @@
 package com.domichav.perfulandia.data.remote.dto.cliente
 
+import com.domichav.perfulandia.data.remote.dto.user.UserDto
 import com.google.gson.annotations.SerializedName
 import java.util.Date
 
@@ -13,7 +14,7 @@ data class ClienteProfileDto(
     val id: String,
 
     @SerializedName("user")
-    val user: String,
+    val user: UserDto,
 
     @SerializedName("nombre")
     val nombre: String,

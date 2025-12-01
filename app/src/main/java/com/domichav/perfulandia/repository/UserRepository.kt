@@ -10,6 +10,11 @@ import com.domichav.perfulandia.data.remote.dto.RegisterRequest
 import com.domichav.perfulandia.data.remote.dto.LoginResponse
 import com.domichav.perfulandia.data.remote.dto.cliente.ClienteProfileDto
 import com.domichav.perfulandia.data.remote.dto.user.UserDto
+import android.content.Context
+import android.net.Uri
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 /**
  * Repository para el manejo de operaciones relacionadas con los usuarios, como el manejo de sesiones. (session management)
@@ -22,6 +27,8 @@ class UserRepository(application: Application) {
     private val apiService: ApiService = RetrofitClient.create(application)
     private val sessionManager = SessionManager(application)
     // Eliminada la variable 'app' porque ya no se usa la lógica local del AccountRepository.
+
+    private val context: Context = application
 
     private val TAG = "UserRepository"
 
@@ -88,21 +95,51 @@ class UserRepository(application: Application) {
      * Busca (fetch) el perfil del usuario actual (ClienteProfile).
      * El token se agrega automáticamente por medio del AuthInterceptor.
      */
-    suspend fun getProfile(): Result<ClienteProfileDto> {
+    suspend fun getProfile(): Result<UserDto> {
         return try {
             val apiResponse = apiService.getMyProfile()
             val profileData = apiResponse.data
 
-            // --- CORRECCIÓN CLAVE: Verificar si 'data' es nulo ---
             if (profileData == null) {
                 Log.w(TAG, "getProfile: response data is null; apiResponse=$apiResponse")
                 return Result.failure(Exception("No profile data returned from API"))
             }
 
-            // Ahora el compilador sabe que profileData no es nulo aquí.
             Result.success(profileData)
         } catch (e: Exception) {
             Log.w(TAG, "getProfile failed: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun uploadAvatar(uri: Uri): Result<UserDto> {
+        return try {
+            // Usa el ContentResolver para obtener un flujo de entrada (InputStream) del Uri.
+            val inputStream = context.contentResolver.openInputStream(uri)
+                ?: return Result.failure(Exception("No se pudo abrir el archivo desde el Uri."))
+
+            // Lee los bytes del archivo.
+            val fileBytes = inputStream.readBytes()
+            inputStream.close()
+
+            // Crea un RequestBody con los bytes del archivo y su tipo MIME.
+            val requestFile = fileBytes.toRequestBody(
+                context.contentResolver.getType(uri)?.toMediaTypeOrNull()
+            )
+
+            // Crea el MultipartBody.Part, que es lo que Retrofit necesita.
+            // El nombre "file" debe coincidir con el que espera tu backend (en el FileInterceptor).
+            val body = MultipartBody.Part.createFormData("file", "avatar.jpg", requestFile)
+
+            // Llama al endpoint correcto del ApiService.
+            val response = apiService.uploadUserAvatar(body)
+            if (response.data == null) {
+                return Result.failure(Exception("La respuesta de la subida del avatar no contenía datos del usuario."))
+            }
+
+            Result.success(response.data)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al subir el avatar: ${e.message}", e)
             Result.failure(e)
         }
     }

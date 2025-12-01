@@ -13,7 +13,7 @@ import retrofit2.converter.gson.GsonConverterFactory
  */
 object RetrofitClient {
 
-    private const val BASE_URL = "https://x8ki-letl-twmt.n7.xano.io/api:Rfm_61dW/"
+    private const val BASE_URL = "https://perfulandia-backend-android.onrender.com/"
 
     /**
      * Crea y configura una instancia de servicio Retrofit

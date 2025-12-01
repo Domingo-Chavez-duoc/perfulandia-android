@@ -146,18 +146,17 @@ class UserRepositoryTest {
     fun `getProfile returns success with ClienteProfileDto`() = runTest {
         // Given
         // --- CORREGIDO: La respuesta esperada es un ClienteProfileDto
-        val clienteProfileDto = ClienteProfileDto(
-            id = "profile-123",
-            user = "user-123",
-            nombre = "Test User",
-            telefono = null,
-            direccion = null,
-            preferencias = null,
+        val userDto = UserDto(
+            id = "user-123",
+            email = "test@example.com",
+            role = "cliente",
+            avatar = null,
             isActive = true,
+            emailVerified = false,
             createdAt = Date(),
             updatedAt = Date()
         )
-        val apiResponse = ApiResponse(success = true, data = clienteProfileDto, message = "Success", total = null)
+        val apiResponse = ApiResponse(success = true, data = userDto, message = "Success", total = null)
         coEvery { mockApiService.getMyProfile() } returns apiResponse
 
         // When
@@ -165,7 +164,7 @@ class UserRepositoryTest {
 
         // Then
         assertTrue(result.isSuccess, "getProfile result should be Success")
-        assertEquals(clienteProfileDto, result.getOrNull())
+        assertEquals(userDto, result.getOrNull())
         // --- CORREGIDO: Se elimina la lógica de "local token", ya que fue eliminada del ViewModel
     }
 
