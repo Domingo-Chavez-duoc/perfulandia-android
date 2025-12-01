@@ -1,11 +1,14 @@
 package com.domichav.perfulandia.data.remote
 
 import com.domichav.perfulandia.data.remote.dto.*
+import com.domichav.perfulandia.data.remote.dto.categoria.CategoriaDto
+import com.domichav.perfulandia.data.remote.dto.categoria.CreateCategoriaRequest
 import com.domichav.perfulandia.data.remote.dto.perfume.PerfumeDto
 import com.domichav.perfulandia.data.remote.dto.user.UserDto
 import com.domichav.perfulandia.data.remote.dto.user.UsersResponse
 import com.domichav.perfulandia.data.remote.dto.pedido.CreatePedidoRequest
 import com.domichav.perfulandia.data.remote.dto.pedido.PedidoResponseDto
+import com.domichav.perfulandia.data.remote.dto.perfume.CreatePerfumeRequest
 import com.domichav.perfulandia.data.remote.dto.resena.CreateResenaRequest
 import com.domichav.perfulandia.data.remote.dto.resena.ResenaDto
 import com.domichav.perfulandia.data.remote.dto.resena.UpdateResenaDto
@@ -188,6 +191,96 @@ interface ApiService {
      */
     @DELETE("pedido/{id}")
     suspend fun deletePedido(@Path("id") id: String): ApiResponse<Unit>
+
+    //----- CATEGORIA ENDPOINTS -----//
+
+    /**
+     * GET /categoria
+     * Listar todas las categorías
+     */
+    @GET("categoria")
+    suspend fun getAllCategorias(): ApiResponse<List<CategoriaDto>>
+
+    /**
+     * GET /categoria/{id}
+     * Obtener una categoría por su ID
+     */
+    @GET("categoria/{id}")
+    suspend fun getCategoriaById(@Path("id") categoriaId: String): ApiResponse<CategoriaDto>
+
+    /**
+     * POST /categoria
+     * Crear una nueva categoría
+     */
+    @POST("categoria")
+    suspend fun createCategoria(@Body createRequest: CreateCategoriaRequest): ApiResponse<CategoriaDto>
+
+    /**
+     * PATCH /categoria/{id}
+     * Actualizar una categoría existente
+     */
+    @PATCH("categoria/{id}")
+    suspend fun updateCategoria(
+        @Path("id") categoriaId: String,
+        @Body updateRequest: Map<String, @JvmSuppressWildcards Any>
+    ): ApiResponse<CategoriaDto>
+
+    /**
+     * DELETE /categoria/{id}
+     * Eliminar una categoría
+     */
+    @DELETE("categoria/{id}")
+    suspend fun deleteCategoria(@Path("id") categoriaId: String): ApiResponse<Unit>
+
+    /**
+     * POST /categoria/{id}/upload-image
+     * Subir una imagen para una categoría
+     */
+    @Multipart
+    @POST("categoria/{id}/upload-image")
+    suspend fun uploadCategoriaImage(
+        @Path("id") categoriaId: String,
+        @Part file: MultipartBody.Part
+    ): ApiResponse<Any>
+
+    //----- PERFUME ENDPOINTS -----//
+    @GET("perfume")
+    suspend fun getPerfumes(): ApiResponse<List<PerfumeDto>>
+
+    @GET("perfume/{id}")
+    suspend fun getPerfumeById(@Path("id") perfumeId: String): ApiResponse<PerfumeDto>
+
+    @POST("perfume")
+    suspend fun createPerfume(@Body createRequest: CreatePerfumeRequest): ApiResponse<PerfumeDto>
+
+    @PATCH("perfume/{id}")
+    suspend fun updatePerfume(
+        @Path("id") perfumeId: String,
+        @Body updateRequest: Map<String, @JvmSuppressWildcards Any> // Usar Map para actualizaciones parciales
+    ): ApiResponse<PerfumeDto>
+
+    @DELETE("perfume/{id}")
+    suspend fun deletePerfume(@Path("id") perfumeId: String): ApiResponse<Unit> // Unit si la 'data' es nula o no importa
+
+    @GET("perfume/categoria/{categoriaId}")
+    suspend fun getPerfumesByCategoria(@Path("categoriaId") categoriaId: String): ApiResponse<List<PerfumeDto>>
+
+    @GET("perfume/filtros")
+    suspend fun filterPerfumes(
+        @Query("genero") genero: String? = null,
+        @Query("fragancia") fragancia: String? = null,
+        @Query("tamaño") tamaño: String? = null,
+        @Query("precioMin") precioMin: Double? = null,
+        @Query("precioMax") precioMax: Double? = null
+    ): ApiResponse<List<PerfumeDto>>
+
+    @Multipart
+    @POST("perfume/{id}/upload-image")
+    suspend fun uploadPerfumeImage(
+        @Path("id") perfumeId: String,
+        @Part file: MultipartBody.Part
+    ): ApiResponse<Any> // 'Any' porque la respuesta es compleja, se puede crear un DTO específico
+
 }
 
 
