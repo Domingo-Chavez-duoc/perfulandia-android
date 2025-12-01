@@ -74,3 +74,67 @@ interface ApiService {
     @GET("users/{id}")
     suspend fun getUserById(@Path("id") id: Int): UserDto
 }
+
+
+//----- RESENA ENDPOINTS -----//
+
+/**
+ * Obtiene todas las reseñas.
+ * GET /resena
+ */
+@GET("resena")
+suspend fun getResenas(): List<ResenaDto>
+
+/**
+ * Crea una nueva reseña para un perfume.
+ * POST /resena
+ */
+@POST("resena")
+suspend fun createResena(@Body request: CreateResenaRequest): ResenaDto
+
+/**
+ * Obtiene una reseña específica por su ID.
+ * GET /resena/{id}
+ */
+@GET("resena/{id}")
+suspend fun getResenaById(@Path("id") id: String): ResenaDto
+
+/**
+ * Actualiza una reseña existente.
+ * PUT /resena/{id}
+ */
+@PUT("resena/{id}")
+suspend fun updateResena(@Path("id") id: String, @Body request: CreateResenaRequest): ResenaDto
+
+/**
+ * Elimina una reseña.
+ * DELETE /resena/{id}
+ */
+@DELETE("resena/{id}")
+suspend fun deleteResena(@Path("id") id: String): Unit // O un objeto de respuesta si la API lo devuelve
+
+
+
+//----- PEDIDO ENDPOINTS -----//
+
+/**
+ * Obtiene todos los pedidos del usuario autenticado.
+ * GET /pedido
+ */
+@GET("pedido")
+suspend fun getPedidos(): List<PedidoResponseDto>
+
+/**
+ * Crea un nuevo pedido.
+ * POST /pedido
+ */
+@POST("pedido")
+suspend fun createPedido(@Body request: CreatePedidoRequest): PedidoResponseDto
+
+/**
+ * Obtiene un pedido específico por su ID.
+ * GET /pedido/{id}
+ */
+@GET("pedido/{id}")
+suspend fun getPedidoById(@Path("id") id: String): PedidoResponseDto
+
