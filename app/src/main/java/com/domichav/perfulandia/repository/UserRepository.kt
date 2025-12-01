@@ -3,48 +3,56 @@ package com.domichav.perfulandia.repository
 import android.app.Application
 import android.util.Log
 import com.domichav.perfulandia.data.local.SessionManager
+import com.domichav.perfulandia.data.remote.ApiService
 import com.domichav.perfulandia.data.remote.RetrofitClient
-import com.domichav.perfulandia.data.remote.api.AuthApiService
 import com.domichav.perfulandia.data.remote.dto.LoginRequest
+import com.domichav.perfulandia.data.remote.dto.RegisterRequest
 import com.domichav.perfulandia.data.remote.dto.LoginResponse
-import com.domichav.perfulandia.data.remote.dto.SignupRequest
-import com.domichav.perfulandia.data.remote.dto.SignupResponse
-import com.domichav.perfulandia.data.remote.dto.UserResponse
-import kotlinx.coroutines.flow.first
+import com.domichav.perfulandia.data.remote.dto.cliente.ClienteProfileDto
+import com.domichav.perfulandia.data.remote.dto.user.UserDto
 
 /**
  * Repository para el manejo de operaciones relacionadas con los usuarios, como el manejo de sesiones. (session management)
+ *
+ * *** CÓDIGO CORREGIDO Y ALINEADO CON LA API REAL DE NESTJS ***
  */
 class UserRepository(application: Application) {
 
-    // Crea el servicio API usando el contexto de la aplicación
-    private val authApiService: AuthApiService = RetrofitClient.create(application)
+    // --- CORREGIDO: Renombrada la variable para mayor claridad. Usa la instancia de Retrofit. ---
+    private val apiService: ApiService = RetrofitClient.create(application)
     private val sessionManager = SessionManager(application)
-    private val app = application
+    // Eliminada la variable 'app' porque ya no se usa la lógica local del AccountRepository.
 
     private val TAG = "UserRepository"
 
     /**
-     * Logea un usuario existente a través del endpoint de autenticación remota (remote auth) y guarda el token recibido.
+     * Logea un usuario existente y guarda el token JWT recibido.
      */
     suspend fun login(request: LoginRequest): Result<LoginResponse> {
         return try {
-            val response = authApiService.login(request)
+            val apiResponse = apiService.login(request)
+            val loginData = apiResponse.data
 
-            // Prefer authToken (README indicates server returns authToken) then fallback to accessToken
-            val token = response.authToken ?: response.accessToken
+            // --- CORRECCIÓN CLAVE: Verificar si 'data' es nulo ---
+            if (loginData == null) {
+                Log.w(TAG, "login: response data is null; apiResponse=$apiResponse")
+                return Result.failure(Exception("No data returned from login API"))
+            }
 
-            if (token.isNullOrEmpty()) {
-                Log.w(TAG, "login: no token in response; response=$response")
+            val token = loginData.accessToken
+
+            if (token.isEmpty()) {
+                Log.w(TAG, "login: no token in response; response=$loginData")
                 return Result.failure(Exception("No auth token returned from login API"))
             }
 
             Log.d(TAG, "login: saving token=$token")
             sessionManager.saveAuthToken(token)
-            val saved = sessionManager.authToken.first()
-            Log.d(TAG, "login: saved token=$saved")
 
-            Result.success(response)
+            sessionManager.saveUserEmail(request.email)
+
+            // Ahora el compilador sabe que loginData no es nulo aquí.
+            Result.success(loginData)
         } catch (e: Exception) {
             Log.w(TAG, "login failed: ${e.message}")
             Result.failure(e)
@@ -52,72 +60,49 @@ class UserRepository(application: Application) {
     }
 
     /**
-     * Registra un nuevo usuario y guarda el token en caso de éxito
+     * Registra un nuevo usuario. El backend no devuelve un token en el registro,
+     * por lo que el usuario deberá hacer login después.
      */
-    suspend fun register(request: SignupRequest): Result<SignupResponse> {
+    suspend fun register(request: RegisterRequest): Result<UserDto> {
         return try {
-            val response = authApiService.signup(request)
+            val apiResponse = apiService.register(request)
+            val userData = apiResponse.data
 
-            // Algunos APIs devuelven el token en diferentes campos. Prefiere authToken por sobre accessToken
-            val token = response.authToken ?: response.accessToken
-
-            if (token.isNullOrEmpty()) {
-                return Result.failure(Exception("No auth token returned from register API"))
+            // --- CORRECCIÓN CLAVE: Verificar si 'data' es nulo ---
+            if (userData == null) {
+                Log.w(TAG, "register: response data is null; apiResponse=$apiResponse")
+                return Result.failure(Exception("No data returned from register API"))
             }
 
-            Log.d(TAG, "register: saving token=$token")
-            sessionManager.saveAuthToken(token)
-            val saved = sessionManager.authToken.first()
-            Log.d(TAG, "register: saved token=$saved")
+            Log.d(TAG, "register: successful, user created=${userData.email}")
 
-            // Si el signup es exitoso, guarda el token de autenticación
-            Result.success(response)
+            // Ahora el compilador sabe que userData no es nulo aquí.
+            Result.success(userData)
         } catch (e: Exception) {
+            Log.w(TAG, "register failed: ${e.message}")
             Result.failure(e)
         }
     }
 
     /**
-     * Busca (fetch) el perfil del usuario actual. El token se agrega automáticamente por medio del AuthInterceptor
-     * Si el token es demo local (prefijo 'local-token-'), devuelve el profile del usuario.
-     * Desde el local AccountRepository para evitar 401 de la API remota.
+     * Busca (fetch) el perfil del usuario actual (ClienteProfile).
+     * El token se agrega automáticamente por medio del AuthInterceptor.
      */
-    suspend fun getProfile(): Result<UserResponse> {
+    suspend fun getProfile(): Result<ClienteProfileDto> {
         return try {
-            // Leer el token actual de forma sincrónica
-            val token = sessionManager.authToken.first()
+            val apiResponse = apiService.getMyProfile()
+            val profileData = apiResponse.data
 
-            if (token != null && token.startsWith("local-token-")) {
-                // Token local: extraer el email y buscar la cuenta local
-                val email = token.removePrefix("local-token-")
-                val accountRepo = AccountRepository(app)
-                val accounts = accountRepo.getAllAccountsOnce()
-                val account = accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
-
-                if (account != null) {
-                    // Cuenta local encontrada, mapear a UserResponse
-                    val localUser = UserResponse(
-                        id = 0,
-                        name = account.name,
-                        email = account.email
-                    )
-                    return Result.success(localUser)
-                } else {
-                    // Limpiar el token local obsoleto para que la app pueda recuperarse a un estado de login
-                    try {
-                        sessionManager.saveAuthToken("")
-                    } catch (_: Exception) {
-                        // ignorar
-                    }
-                    Log.w(TAG, "getProfile: local token present but account not found for email=$email; cleared token")
-                    return Result.failure(Exception("Local account not found for token"))
-                }
+            // --- CORRECCIÓN CLAVE: Verificar si 'data' es nulo ---
+            if (profileData == null) {
+                Log.w(TAG, "getProfile: response data is null; apiResponse=$apiResponse")
+                return Result.failure(Exception("No profile data returned from API"))
             }
 
-            // De otro modo, llamar al endpoint remoto
-            val response = authApiService.getMe()
-            Result.success(response)
+            // Ahora el compilador sabe que profileData no es nulo aquí.
+            Result.success(profileData)
         } catch (e: Exception) {
+            Log.w(TAG, "getProfile failed: ${e.message}")
             Result.failure(e)
         }
     }

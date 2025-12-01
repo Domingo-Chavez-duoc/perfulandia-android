@@ -22,6 +22,7 @@ class SessionManager(context: Context) {
     companion object {
         // Llave para almacenar el token de autenticación en DataStore.
         private val AUTH_TOKEN = stringPreferencesKey("auth_token")
+        private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
     }
 
     /**
@@ -41,6 +42,16 @@ class SessionManager(context: Context) {
      */
     val authToken: Flow<String?> = dataStore.data.map {
         it[AUTH_TOKEN]
+    }
+
+    val userEmail: Flow<String?> = dataStore.data.map { preferences ->
+        preferences[USER_EMAIL_KEY]
+    }
+
+    suspend fun saveUserEmail(email: String) {
+        dataStore.edit { preferences ->
+            preferences[USER_EMAIL_KEY] = email
+        }
     }
 }
 

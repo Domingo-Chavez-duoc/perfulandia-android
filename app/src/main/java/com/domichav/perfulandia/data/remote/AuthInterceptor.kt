@@ -28,7 +28,7 @@ class AuthInterceptor(
 
         // Evitar añadir Authorization para los endpoints de autenticación (login/signup)
         val path = originalRequest.url.encodedPath
-        if (path.contains("/auth/login") || path.contains("/auth/signup")) {
+        if (path.contains("/auth/login") || path.contains("/auth/register")) {
             Log.d(TAG, "Skipping auth header for path=$path")
             return chain.proceed(originalRequest)
         }

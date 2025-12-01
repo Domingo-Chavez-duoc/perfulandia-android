@@ -1,128 +1,82 @@
 package com.domichav.perfulandia.viewmodel
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.domichav.perfulandia.data.local.SessionManager
 import com.domichav.perfulandia.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import android.net.Uri
-import kotlinx.coroutines.flow.update
-import com.domichav.perfulandia.repository.AvatarRepository
-import com.domichav.perfulandia.repository.AccountRepository
-import com.domichav.perfulandia.utils.copyUriToInternalStorage
 import kotlinx.coroutines.flow.first
-import java.io.File
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
- * Estado de la UI
+ * Estado de la UI para el perfil de usuario.
+ * Simplificado para reflejar la API real.
  */
 data class ProfileUiState(
     val isLoading: Boolean = false,
     val userName: String = "",
     val userEmail: String = "",
     val error: String? = null,
-    val avatarUri: Uri? = null
+    // Este campo ahora representará la URL del avatar que viene del backend.
+    val avatarUrl: String? = null
 )
 
 /**
- * ViewModel: Maneja la lógica de UI y el estado
+ * ViewModel que maneja la lógica de la pantalla de perfil.
+ * *** CÓDIGO CORREGIDO: ALINEADO CON LA API REAL DE NESTJS ***
  */
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
-
-    // Pasa el contexto de la aplicación a repositories
-    private val repository = UserRepository(application)
-    private val avatarRepository = AvatarRepository(application)
-    private val accountRepository = AccountRepository(application)
-
-    private val app: Application = application
+    // --- CORREGIDO: Solo se necesitan estos dos repositorios ---
+    private val userRepository = UserRepository(application)
+    private val sessionManager = SessionManager(application)
+    // --- ELIMINADO: `AccountRepository` y `AvatarRepository` ya no son necesarios.
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState
 
     init {
-
-        // Carga user data al crear el ViewModel
-        loadUser()
-
-        // Suscribe a cambios en la URI del avatar
-        // Keep legacy subscription for backwards compatibility (single avatar key)
-        viewModelScope.launch {
-            avatarRepository.getLegacyAvatarUri().collect { uri ->
-                // Only set legacy avatar if we don't have a per-account avatar yet
-                _uiState.update { if (it.avatarUri == null) it.copy(avatarUri = uri) else it }
-            }
-        }
+        // Al iniciar, cargamos los datos del usuario desde nuestra API real.
+        loadUserProfile()
     }
 
     /**
-     * Cargamos los datos del usuario desde la API utilizando el nuevo method getProfile
+     * Carga los datos del perfil:
+     * - Nombre y URL del avatar desde la API (a través de ClienteProfile y User).
+     * - Email desde la sesión local (guardado durante el login).
      */
-    fun loadUser() {
+    fun loadUserProfile() {
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         viewModelScope.launch {
-            // Llama al nuevo method getProfile() que no requiere un ID
-            val result = repository.getProfile()
+            // Se obtienen ambas piezas de información en paralelo para eficiencia.
+            val profileResult = userRepository.getProfile()
+            val userEmail = sessionManager.userEmail.first() ?: "Email no encontrado"
 
-            result.fold(
-                onSuccess = { user ->
-
-                    // Utiliza el nombre del campo correcto de UserResponse
+            // --- LÓGICA DE UI SIMPLIFICADA ---
+            // Se elimina toda la lógica compleja de `AccountRepository` y manejo de archivos locales.
+            // Ahora solo actualizamos el estado con los datos que vienen de la API y la sesión.
+            profileResult.fold(
+                onSuccess = { clienteProfile ->
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            userName = user.name,
-                            userEmail = user.email
+                            userName = clienteProfile.nombre,
+                            userEmail = userEmail
+                            // TODO: Cuando el backend devuelva el User asociado, aquí pondríamos:
+                            // avatarUrl = clienteProfile.user.avatar
                         )
-                    }
-                    // After we have the user's email, try to load per-account avatar from AccountRepository
-                    viewModelScope.launch {
-                        try {
-                            // 1) Check AccountRepository for stored avatarPath
-                            val accounts = accountRepository.getAllAccountsOnce()
-                            val account = accounts.firstOrNull { it.email.equals(user.email, ignoreCase = true) }
-                            if (account?.avatarPath != null) {
-                                // Use internal file path
-                                val file = File(account.avatarPath)
-                                if (file.exists()) {
-                                    _uiState.update { it.copy(avatarUri = Uri.fromFile(file)) }
-                                } else {
-                                    // File missing: clear stored avatarPath
-                                    accountRepository.updateAccountAvatar(user.email, null)
-                                    _uiState.update { it.copy(avatarUri = null) }
-                                }
-                            } else {
-                                // 2) no per-account avatar: try legacy avatar and migrate it to internal storage
-                                val legacy = avatarRepository.getLegacyAvatarUri().first()
-                                if (legacy != null) {
-                                    // Attempt to copy legacy URI content into app internal storage
-                                    val sanitized = user.email.replace("[^A-Za-z0-9]".toRegex(), "_")
-                                    val targetName = "avatar_${sanitized}.jpg"
-                                    val copiedPath = copyUriToInternalStorage(app, legacy, targetName)
-                                    if (copiedPath != null) {
-                                        accountRepository.updateAccountAvatar(user.email, copiedPath)
-                                        _uiState.update { it.copy(avatarUri = Uri.fromFile(File(copiedPath))) }
-                                    } else {
-                                        _uiState.update { it.copy(avatarUri = null) }
-                                    }
-                                } else {
-                                    _uiState.update { it.copy(avatarUri = null) }
-                                }
-                            }
-                        } catch (e: Exception) {
-                            // ignore and continue without avatar
-                            _uiState.update { it.copy(avatarUri = null) }
-                        }
                     }
                 },
                 onFailure = { exception ->
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = exception.message ?: "Error desconocido"
+                            error = exception.message ?: "Error desconocido al cargar el perfil"
                         )
                     }
                 }
@@ -131,51 +85,20 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
 
     /**
-     * Updates the URI of the user's avatar.
+     * Actualiza el avatar del usuario.
+     * Esta función ahora es un placeholder para la lógica correcta.
      */
     fun updateAvatar(uri: Uri?) {
-        // Updatea el estado de la UI
-        _uiState.update { it.copy(avatarUri = uri) }
+        // --- LÓGICA DE UI SIMPLIFICADA ---
+        // Se elimina toda la lógica de `copyUriToInternalStorage` y `AccountRepository`.
+        // TODO: La lógica correcta aquí sería:
+        // 1. Convertir la `uri` de la imagen a un `MultipartBody.Part`.
+        // 2. Crear una nueva función en `ApiService`: `uploadAvatar(file: MultipartBody.Part)`.
+        // 3. Crear una nueva función en `UserRepository` que llame a ese endpoint.
+        // 4. Llamar a `userRepository.uploadAvatar(file)` desde aquí.
+        // 5. Al tener éxito, el backend actualiza la URL y podemos llamar a `loadUserProfile()` para refrescar.
 
-        // Persistencia asíncrona del URI del avatar
-        viewModelScope.launch {
-            val email = _uiState.value.userEmail
-            if (uri == null) {
-                // Clear avatar for this account
-                if (email.isNotBlank()) {
-                    // delete stored file if any
-                    val accounts = accountRepository.getAllAccountsOnce()
-                    val account = accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
-                    account?.avatarPath?.let { path ->
-                        try { File(path).delete() } catch (_: Exception) {}
-                    }
-                    accountRepository.updateAccountAvatar(email, null)
-                } else {
-                    avatarRepository.saveLegacyAvatarUri(null)
-                }
-            } else {
-                // Copy the provided URI into internal storage and save path in Account
-                if (email.isNotBlank()) {
-                    val sanitized = email.replace("[^A-Za-z0-9]".toRegex(), "_")
-                    val targetName = "avatar_${sanitized}.jpg"
-                    val copiedPath = copyUriToInternalStorage(app, uri, targetName)
-                    if (copiedPath != null) {
-                        // remove previous file if different
-                        val accounts = accountRepository.getAllAccountsOnce()
-                        val account = accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
-                        account?.avatarPath?.let { prev -> if (prev != copiedPath) try { File(prev).delete() } catch (_: Exception) {} }
-
-                        accountRepository.updateAccountAvatar(email, copiedPath)
-                        _uiState.update { it.copy(avatarUri = Uri.fromFile(File(copiedPath))) }
-                    } else {
-                        // fallback: save legacy uri string
-                        avatarRepository.saveLegacyAvatarUri(uri)
-                    }
-                } else {
-                    // No email known yet, save as legacy
-                    avatarRepository.saveLegacyAvatarUri(uri)
-                }
-            }
-        }
+        // Por ahora, no hacemos nada para evitar introducir lógica incorrecta.
+        _uiState.update { it.copy(error = "La actualización de avatar aún no está implementada.") }
     }
 }

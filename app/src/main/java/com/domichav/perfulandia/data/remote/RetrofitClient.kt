@@ -2,7 +2,7 @@ package com.domichav.perfulandia.data.remote
 
 import android.content.Context
 import com.domichav.perfulandia.data.local.SessionManager
-import com.domichav.perfulandia.data.remote.api.AuthApiService
+import com.domichav.perfulandia.data.remote.ApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -18,9 +18,9 @@ object RetrofitClient {
     /**
      * Crea y configura una instancia de servicio Retrofit
      * @param context El contexto de la aplicación se utiliza para iniciar el SessionManager
-     * @return Una configuración completa de la instancia [AuthApiService].
+     * @return Una configuración completa de la instancia [ApiService].
      */
-    fun create(context: Context): AuthApiService {
+    fun create(context: Context): ApiService {
         // 1. SesssionManager para obtener el token
         val sessionManager = SessionManager(context)
 
@@ -46,6 +46,6 @@ object RetrofitClient {
             .build()
 
         // 6. Crea el Api Service con la configuración de Retrofit
-        return retrofit.create(AuthApiService::class.java)
+        return retrofit.create(ApiService::class.java)
     }
 }

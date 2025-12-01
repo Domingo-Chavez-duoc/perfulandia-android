@@ -7,8 +7,8 @@ import com.google.gson.annotations.SerializedName
  * Datos que ENVIAMOS al servidor para crear un nuevo usuario
  */
 data class RegisterRequest(
-    @SerializedName("username")
-    val username: String,
+    @SerializedName("nombre")
+    val nombre: String,
 
     @SerializedName("email")
     val email: String,

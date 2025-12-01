@@ -5,8 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.domichav.perfulandia.data.local.Account
 import com.domichav.perfulandia.repository.AccountRepository
-import com.domichav.perfulandia.data.remote.dto.SignupRequest
-import com.domichav.perfulandia.data.remote.dto.SignupResponse
+import com.domichav.perfulandia.data.remote.dto.LoginRequest
+import com.domichav.perfulandia.data.remote.dto.RegisterRequest
+import com.domichav.perfulandia.data.remote.dto.user.UserDto
 import com.domichav.perfulandia.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,10 +48,10 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
 
         viewModelScope.launch {
             // Crea una solicitud para la API
-            val request = SignupRequest(name = name, email = email, password = password)
+            val request = RegisterRequest(nombre = name, email = email, password = password)
 
             // Llama al repository
-            val result: Result<SignupResponse> = repository.register(request)
+            val result: Result<UserDto> = repository.register(request)
 
 
             //Updatea el estado de la UI basado en el resultado del repository

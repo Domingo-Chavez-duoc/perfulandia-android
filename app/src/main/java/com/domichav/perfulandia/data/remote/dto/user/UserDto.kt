@@ -1,38 +1,37 @@
 package com.domichav.perfulandia.data.remote.dto.user
 
 import com.google.gson.annotations.SerializedName
+import java.util.Date
 
 /**
- * Este objeto representa los datos que VIAJAN entre nuestra app y el servidor
+ * Representa la entidad 'User' del backend.
+ * Se enfoca exclusivamente en la autenticación y la identidad básica.
  */
 data class UserDto(
-    @SerializedName("id")
-    val id: Int,
-
-    @SerializedName("username")
-    val username: String,
+    @SerializedName("_id")
+    val id: String,
 
     @SerializedName("email")
     val email: String,
 
+    // El password NUNCA se envía al cliente
+
     @SerializedName("role")
     val role: String,
 
-    @SerializedName("phone")
-    val phone: String,
+    @SerializedName("avatar")
+    val avatar: String?, // Opcional
 
-    @SerializedName("location")
-    val location: String,
+    @SerializedName("isActive")
+    val isActive: Boolean,
 
-    @SerializedName("address")
-    val address: String,
+    @SerializedName("emailVerified")
+    val emailVerified: Boolean,
 
-    @SerializedName("firstName")
-    val firstName: String,
+    // Timestamps que vienen del backend (aparentemente no se usan en la app)
+    @SerializedName("createdAt")
+    val createdAt: Date,
 
-    @SerializedName("lastName")
-    val lastName: String,
-
-    @SerializedName("image")
-    val image: String? = null  // URL de imagen de perfil
+    @SerializedName("updatedAt")
+    val updatedAt: Date
 )

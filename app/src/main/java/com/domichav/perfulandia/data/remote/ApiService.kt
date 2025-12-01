@@ -3,6 +3,7 @@ package com.domichav.perfulandia.data.remote
 import com.domichav.perfulandia.data.remote.dto.*
 import com.domichav.perfulandia.data.remote.dto.categoria.CategoriaDto
 import com.domichav.perfulandia.data.remote.dto.categoria.CreateCategoriaRequest
+import com.domichav.perfulandia.data.remote.dto.cliente.ClienteProfileDto
 import com.domichav.perfulandia.data.remote.dto.perfume.PerfumeDto
 import com.domichav.perfulandia.data.remote.dto.user.UserDto
 import com.domichav.perfulandia.data.remote.dto.user.UsersResponse
@@ -22,67 +23,27 @@ import retrofit2.http.*
  */
 interface ApiService {
 
+    //----- USUARIO Y CLIENTE ENDPOINTS -----//
     /**
-     * LOGIN - autenticación de usuario
-     * POST /user/login
-     *
-     * Ejemplo de uso:
-     * val response = apiService.login(LoginRequest("emilys", "emilyspass"))
-     * sessionManager.saveAuthToken(response.accessToken)
+     * Inicia sesión de usuario.
+     * Corresponde a: POST /auth/login
      */
-    @POST("user/login")
-    suspend fun login(@Body request: LoginRequest): LoginResponse
+    @POST("auth/login")
+    suspend fun login(@Body request: LoginRequest): ApiResponse<LoginResponse>
 
     /**
-     * REGISTRO - Crear un nuevo usuario
-     * POST /users/add
+     * Registra un nuevo usuario de tipo CLIENTE.
+     * Corresponde a: POST /auth/register
      */
-    @POST("users/add")
-    suspend fun register(@Body request: RegisterRequest): UserDto
+    @POST("auth/register")
+    suspend fun register(@Body request: RegisterRequest): ApiResponse<UserDto>
 
     /**
-     * OBTENER USUARIO ACTUAL - necesita autenticación
-     * GET /user/me
-     *
-     * Ojo: Este endpoint REQUIERE el token jwt
-     * El AuthInterceptor se añade automáticamente
-     *
-     * Ejemplo de uso:
-     * val currentUser = apiService.getCurrentUser()
+     * Obtiene el perfil del usuario actualmente autenticado (User + ClienteProfile).
+     * Corresponde a: GET /auth/profile
      */
-    @GET("user/me")
-    suspend fun getCurrentUser(): UserDto
-
-    /**
-     * OBTENER LISTA DE USUARIOS
-     * GET /users
-     *
-     * Ejemplo de uso:
-     * val response = apiService.getUsers()
-     * val usersList = response.users  - lista de UserDto
-     */
-    @GET("users")
-    suspend fun getUsers(): UsersResponse
-
-    /**
-     *Busca usuario x nombre
-     * GET /users/search?q={query}
-     *
-     * Ejemplo de uso:
-     * val results = apiService.searchUsers("John")
-     */
-    @GET("users/search")
-    suspend fun searchUsers(@Query("q") query: String): UsersResponse
-
-    /**
-     * OBTENER USUARIO x ID
-     * GET /users/{id}
-     *
-     * Ejemplo de uso:
-     * val user = apiService.getUserById(1)
-     */
-    @GET("users/{id}")
-    suspend fun getUserById(@Path("id") id: Int): UserDto
+    @GET("auth/profile")
+    suspend fun getMyProfile(): ApiResponse<ClienteProfileDto>
 
     //----- RESEÑA ENDPOINTS -----//
 
