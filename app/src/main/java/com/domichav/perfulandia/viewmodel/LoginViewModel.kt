@@ -2,10 +2,13 @@ package com.domichav.perfulandia.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.domichav.perfulandia.data.remote.dto.LoginRequest
 import com.domichav.perfulandia.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -23,43 +26,40 @@ data class LoginUiState(
  * ViewModel for the Login screen logic.
  * It uses AndroidViewModel to get the Application context, which is needed by UserRepository.
  */
-class LoginViewModel(application: Application) : AndroidViewModel(application) {
-
-    // Manually instantiate UserRepository, just like your other ViewModels
-    private var userRepository = UserRepository(application)
+class LoginViewModel(
+    private val userRepository: UserRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
-    val uiState = _uiState.asStateFlow()
+    val uiState: StateFlow<LoginUiState> = _uiState
 
     /**
      * Manejo del boton de login
      * Crea un LoginRequest y llama al repositorio
      */
     fun onLoginClicked(email: String, password: String) {
-        if (_uiState.value.isLoading) return
+        if (email.isBlank() || password.isBlank()) {
+            _uiState.update { it.copy(error = "Email y contraseña no pueden estar vacíos") }
+            return
+        }
 
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         viewModelScope.launch {
-            // Create the request object that the repository expects
-            val loginRequest = LoginRequest(email = email, password = password)
-
-            // Call the existing login method in your UserRepository
-            val result = userRepository.login(loginRequest)
+            val request = LoginRequest(email = email, password = password)
+            val result = userRepository.login(request) // Ahora llamamos con el objeto correcto
 
             result.fold(
                 onSuccess = {
-                    // On success, update UI state to trigger navigation
-                    _uiState.update {
-                        it.copy(isLoading = false, loginSuccess = true)
-                    }
+                    _uiState.update { state -> state.copy(isLoading = false, loginSuccess = true) }
                 },
                 onFailure = { exception ->
                     // On failure, update UI state with the error
-                    _uiState.update {
-                        it.copy(
+                    _uiState.update { state ->
+                        state.copy(
                             isLoading = false,
-                            error = exception.message ?: "Error en el login"
+                            loginSuccess = false,
+                            error = exception.message ?: "Error desconocido"
                         )
                     }
                 }
@@ -73,13 +73,16 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     fun onErrorMessageShown() {
         _uiState.update { it.copy(error = null) }
     }
+}
 
-    /**
-     * Inyecta un UserRepository para propósitos de testing.
-     * Permite reemplazar la instancia real con un mock.
-     */
-    internal fun injectUserRepositoryForTest(repository: UserRepository) {
-        this.userRepository = repository
+class LoginViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {
+            // La Factory se encarga de crear el UserRepository real
+            val repository = UserRepository(application)
+            return LoginViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
-
 }

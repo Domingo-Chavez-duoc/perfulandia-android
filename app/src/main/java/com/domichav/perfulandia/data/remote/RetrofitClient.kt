@@ -2,50 +2,69 @@ package com.domichav.perfulandia.data.remote
 
 import android.content.Context
 import com.domichav.perfulandia.data.local.SessionManager
-import com.domichav.perfulandia.data.remote.ApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 /**
- * Objeto singleton para proporcionar una instancia de Retrofit configurada
+ * Singleton para gestionar la creación y configuración del cliente Retrofit.
  */
 object RetrofitClient {
 
-    private const val BASE_URL = "https://perfulandia-backend-android.onrender.com/"
+    // URL base de tu API. Asegúrate de que apunte a tu backend en Render cuando esté desplegado.
+    // Para desarrollo local con emulador, usa 10.0.2.2.
+    private const val BASE_URL = "http://10.0.2.2:3000/"
+
+    // Variable para mantener la instancia de ApiService
+    @Volatile
+    private var apiService: ApiService? = null
 
     /**
-     * Crea y configura una instancia de servicio Retrofit
-     * @param context El contexto de la aplicación se utiliza para iniciar el SessionManager
-     * @return Una configuración completa de la instancia [ApiService].
+     * Obtiene una instancia configurada de ApiService.
+     * Si no existe, la crea de forma segura (thread-safe).
+     *
+     * @param context El contexto de la aplicación, necesario para inicializar dependencias.
+     * @return Una instancia de ApiService.
      */
-    fun create(context: Context): ApiService {
-        // 1. SesssionManager para obtener el token
+    fun getInstance(context: Context): ApiService {
+        // Doble-verificación para asegurar la creación de una única instancia (thread-safe)
+        return apiService ?: synchronized(this) {
+            apiService ?: buildApiService(context).also { apiService = it }
+        }
+    }
+
+    /**
+     * Construye y configura el ApiService con OkHttpClient y Retrofit.
+     */
+    private fun buildApiService(context: Context): ApiService {
+        // 1. Inicializar SessionManager
         val sessionManager = SessionManager(context)
 
-        // 2, AuthInterceptor para agregar el token a los headers
-        val authInterceptor = AuthInterceptor(sessionManager)
-
-        //3. Loggin Interceptor para depuración (debugging)
+        // 2. Configurar el logging interceptor para depuración
+        // Imprime en Logcat los detalles de las peticiones y respuestas (headers, body, etc.)
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
-        // 5. OkHttpClient con ambos interceptors
-        val client = OkHttpClient.Builder()
-            .addInterceptor(authInterceptor) //añade automaticamente el token
-            .addInterceptor(loggingInterceptor) // Logea la peticion con el token
+        // 3. Configurar el cliente OkHttp para añadir interceptores
+        val okHttpClient = OkHttpClient.Builder()
+            .addInterceptor(AuthInterceptor(sessionManager)) // <--- ¡AQUÍ ESTÁ LA MAGIA!
+            .addInterceptor(loggingInterceptor)              // Añadimos el logger
+            .connectTimeout(30, TimeUnit.SECONDS)          // Aumentar timeouts
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .build()
 
-        // 5. Instancia de Retrofit con el cliente configurado
+        // 4. Construir Retrofit con el cliente OkHttp personalizado
         val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(client)
+            .client(okHttpClient) // <--- Usamos el cliente OkHttp configurado
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
-        // 6. Crea el Api Service con la configuración de Retrofit
+        // 5. Crear y devolver la implementación de ApiService
         return retrofit.create(ApiService::class.java)
     }
 }

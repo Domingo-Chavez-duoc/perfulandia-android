@@ -3,6 +3,9 @@ package com.domichav.perfulandia.viewmodel
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewModelScope
 import com.domichav.perfulandia.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,9 +21,9 @@ data class ProfileUiState(
     val avatarUrl: String? = null
 )
 
-class ProfileViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val userRepository = UserRepository(application)
+class ProfileViewModel(
+    private val userRepository: UserRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState
@@ -94,5 +97,18 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 }
             )
         }
+    }
+}
+
+class ProfileViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
+            // Aquí es donde se crea la dependencia real
+            val repository = UserRepository(application)
+            // Y aquí se la pasamos al ViewModel
+            return ProfileViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class for ProfileViewModel")
     }
 }

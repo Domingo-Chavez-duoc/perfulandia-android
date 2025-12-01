@@ -21,14 +21,11 @@ import okhttp3.RequestBody.Companion.toRequestBody
  *
  * *** CÓDIGO CORREGIDO Y ALINEADO CON LA API REAL DE NESTJS ***
  */
-class UserRepository(application: Application) {
+class UserRepository(private val context: Context) {
 
     // --- CORREGIDO: Renombrada la variable para mayor claridad. Usa la instancia de Retrofit. ---
-    private val apiService: ApiService = RetrofitClient.create(application)
-    private val sessionManager = SessionManager(application)
-    // Eliminada la variable 'app' porque ya no se usa la lógica local del AccountRepository.
-
-    private val context: Context = application
+    private val apiService: ApiService = RetrofitClient.getInstance(context)
+    private val sessionManager = SessionManager(context)
 
     private val TAG = "UserRepository"
 
