@@ -12,6 +12,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -195,6 +196,13 @@ fun HomeScreen(navController: NavController) {
                             colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
                         ) {
                             Text("Ver Perfil (Acceso directo)")
+                        }
+
+                        Button(
+                            onClick = { navController.navigate("catalog") }, // Use "catalog"
+                            colors = ButtonDefaults.buttonColors(containerColor = ButtonColor)
+                        ) {
+                            Text("Ver Catálogo")
                         }
                     }
                 }

@@ -11,6 +11,7 @@ import com.domichav.perfulandia.ui.screens.HomeScreen
 import com.domichav.perfulandia.ui.screens.LoginScreen
 import com.domichav.perfulandia.ui.screens.ProfileScreen
 import com.domichav.perfulandia.ui.screens.RegisterScreen
+import com.domichav.perfulandia.ui.screens.CatalogScreen
 
 import com.domichav.perfulandia.ui.theme.PerfulandiaTheme
 
@@ -41,6 +42,11 @@ class MainActivity : ComponentActivity() {
                                 popUpTo("home") { inclusive = true }
                             }
                         })
+
+                    }
+
+                    composable("catalog") { // Use "catalog" in English
+                        CatalogScreen(navController)
                     }
                 }
             }
