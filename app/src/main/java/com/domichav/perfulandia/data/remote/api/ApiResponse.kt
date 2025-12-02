@@ -1,4 +1,4 @@
-package com.domichav.perfulandia.data.remote.dto
+package com.domichav.perfulandia.data.remote.api
 
 import com.google.gson.annotations.SerializedName
 

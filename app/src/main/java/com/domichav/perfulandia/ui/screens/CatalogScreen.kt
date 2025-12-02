@@ -23,7 +23,7 @@ import com.domichav.perfulandia.R
 import com.domichav.perfulandia.data.remote.dto.perfume.PerfumeDto
 import com.domichav.perfulandia.ui.components.FilterDialog
 import com.domichav.perfulandia.ui.theme.ButtonColor
-import com.domichav.perfulandia.ui.viewmodel.CatalogViewModel
+import com.domichav.perfulandia.viewmodel.CatalogViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,17 +1,15 @@
 package com.domichav.perfulandia.repository
 
-import android.app.Application
-import android.util.Log
-import com.domichav.perfulandia.data.local.SessionManager
-import com.domichav.perfulandia.data.remote.ApiService
-import com.domichav.perfulandia.data.remote.RetrofitClient
-import com.domichav.perfulandia.data.remote.dto.LoginRequest
-import com.domichav.perfulandia.data.remote.dto.RegisterRequest
-import com.domichav.perfulandia.data.remote.dto.LoginResponse
-import com.domichav.perfulandia.data.remote.dto.cliente.ClienteProfileDto
-import com.domichav.perfulandia.data.remote.dto.user.UserDto
 import android.content.Context
 import android.net.Uri
+import android.util.Log
+import com.domichav.perfulandia.data.local.SessionManager
+import com.domichav.perfulandia.data.remote.RetrofitClient
+import com.domichav.perfulandia.data.remote.api.UserApiService
+import com.domichav.perfulandia.data.remote.dto.LoginRequest
+import com.domichav.perfulandia.data.remote.dto.LoginResponse
+import com.domichav.perfulandia.data.remote.dto.RegisterRequest
+import com.domichav.perfulandia.data.remote.dto.user.UserDto
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -24,7 +22,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 class UserRepository(private val context: Context) {
 
     // --- CORREGIDO: Renombrada la variable para mayor claridad. Usa la instancia de Retrofit. ---
-    private val apiService: ApiService = RetrofitClient.getInstance(context)
+    private val userApiService: UserApiService = RetrofitClient.createService(context, UserApiService::class.java)
     private val sessionManager = SessionManager(context)
 
     private val TAG = "UserRepository"
@@ -34,7 +32,7 @@ class UserRepository(private val context: Context) {
      */
     suspend fun login(request: LoginRequest): Result<LoginResponse> {
         return try {
-            val apiResponse = apiService.login(request)
+            val apiResponse = userApiService.login(request)
             val loginData = apiResponse.data
 
             // --- CORRECCIÓN CLAVE: Verificar si 'data' es nulo ---
@@ -69,7 +67,7 @@ class UserRepository(private val context: Context) {
      */
     suspend fun register(request: RegisterRequest): Result<UserDto> {
         return try {
-            val apiResponse = apiService.register(request)
+            val apiResponse = userApiService.register(request)
             val userData = apiResponse.data
 
             // --- CORRECCIÓN CLAVE: Verificar si 'data' es nulo ---
@@ -94,7 +92,7 @@ class UserRepository(private val context: Context) {
      */
     suspend fun getProfile(): Result<UserDto> {
         return try {
-            val apiResponse = apiService.getMyProfile()
+            val apiResponse = userApiService.getMyProfile()
             val profileData = apiResponse.data
 
             if (profileData == null) {
@@ -128,8 +126,7 @@ class UserRepository(private val context: Context) {
             // El nombre "file" debe coincidir con el que espera tu backend (en el FileInterceptor).
             val body = MultipartBody.Part.createFormData("file", "avatar.jpg", requestFile)
 
-            // Llama al endpoint correcto del ApiService.
-            val response = apiService.uploadUserAvatar(body)
+            val response = userApiService.uploadUserAvatar(body)
             if (response.data == null) {
                 return Result.failure(Exception("La respuesta de la subida del avatar no contenía datos del usuario."))
             }

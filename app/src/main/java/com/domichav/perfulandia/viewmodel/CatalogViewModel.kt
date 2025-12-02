@@ -1,9 +1,10 @@
-package com.domichav.perfulandia.ui.viewmodel
+package com.domichav.perfulandia.viewmodel
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domichav.perfulandia.data.remote.RetrofitClient
+import com.domichav.perfulandia.data.remote.api.PerfumeApiService
 import com.domichav.perfulandia.data.remote.dto.perfume.PerfumeDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,8 +43,8 @@ class CatalogViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val apiService = RetrofitClient.create(context)
-                val response = apiService.getPerfumes() // Calls your existing endpoint
+                val perfumeApiService = RetrofitClient.createService(context, PerfumeApiService::class.java)
+                val response = perfumeApiService.getPerfumes() // Calls your existing endpoint
 
                 if (response.success && response.data != null) {
                     _uiState.update {
@@ -81,8 +82,8 @@ class CatalogViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null, showFilterDialog = false) }
             try {
-                val apiService = RetrofitClient.create(context)
-                val response = apiService.filterPerfumes(
+                val perfumeApiService = RetrofitClient.createService(context, PerfumeApiService::class.java)
+                val response = perfumeApiService.filterPerfumes(
                     genero = filters.genero,
                     fragancia = filters.fragancia,
                     precioMin = filters.precioMin,

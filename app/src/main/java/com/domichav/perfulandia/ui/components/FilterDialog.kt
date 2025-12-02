@@ -7,7 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.domichav.perfulandia.ui.viewmodel.FilterState
+import com.domichav.perfulandia.viewmodel.FilterState
 
 @Composable
 fun FilterDialog(

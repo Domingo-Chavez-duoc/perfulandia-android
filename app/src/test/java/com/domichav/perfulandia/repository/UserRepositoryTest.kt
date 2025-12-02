@@ -3,8 +3,9 @@ package com.domichav.perfulandia.repository
 import android.app.Application
 import android.util.Log
 import com.domichav.perfulandia.data.local.SessionManager
-import com.domichav.perfulandia.data.remote.ApiService
 import com.domichav.perfulandia.data.remote.RetrofitClient
+import com.domichav.perfulandia.data.remote.api.ApiResponse
+import com.domichav.perfulandia.data.remote.api.UserApiService
 import com.domichav.perfulandia.data.remote.dto.*
 import com.domichav.perfulandia.data.remote.dto.user.UserDto
 import io.mockk.*
@@ -19,13 +20,13 @@ import kotlin.test.assertTrue
 class UserRepositoryTest {
 
     private lateinit var mockApplication: Application
-    private lateinit var mockApiService: ApiService
+    private lateinit var mockUserApiService: UserApiService
     private lateinit var repository: UserRepository
 
     @Before
     fun setup() {
         mockApplication = mockk(relaxed = true)
-        mockApiService = mockk()
+        mockUserApiService = mockk()
 
         // 1. Mockear las llamadas a Log para evitar errores en el entorno de test
         mockkStatic(Log::class)
@@ -37,13 +38,11 @@ class UserRepositoryTest {
         every { Log.e(any(), any(), any()) } returns 0
 
         // 2. Mockear el constructor de SessionManager.
-        // Cualquier 'new SessionManager(context)' creará un mock.
         mockkConstructor(SessionManager::class)
-        // La línea que causaba el error ha sido ELIMINADA.
 
-        // 3. Mockear RetrofitClient para que devuelva nuestro ApiService mockeado
+        // 3. Mockear RetrofitClient para que devuelva nuestro UserApiService mockeado
         mockkObject(RetrofitClient)
-        every { RetrofitClient.getInstance(any()) } returns mockApiService
+        every { RetrofitClient.createService(any(), UserApiService::class.java) } returns mockUserApiService
 
         // 4. Finalmente, crear el repositorio que usará los mocks anteriores
         repository = UserRepository(mockApplication)
@@ -59,9 +58,10 @@ class UserRepositoryTest {
         // Given
         val loginRequest = LoginRequest("test@example.com", "password123")
         val loginResponse = LoginResponse(accessToken = "mock_token_12345")
-        val apiResponse = ApiResponse(success = true, data = loginResponse, message = "Success", total = null)
+        val apiResponse =
+            ApiResponse(success = true, data = loginResponse, message = "Success", total = null)
 
-        coEvery { mockApiService.login(loginRequest) } returns apiResponse
+        coEvery { mockUserApiService.login(loginRequest) } returns apiResponse
         // Configurar el comportamiento del mock de SessionManager
         coEvery { anyConstructed<SessionManager>().saveAuthToken(any()) } just runs
         coEvery { anyConstructed<SessionManager>().saveUserEmail(any()) } just runs
@@ -83,8 +83,9 @@ class UserRepositoryTest {
         // Given
         val registerRequest = RegisterRequest(nombre = "New User", email = "new@example.com", password = "password123")
         val fakeUser = createUserDtoForTest(id = "user-123", email = "new@example.com")
-        val apiResponse = ApiResponse(success = true, data = fakeUser, message = "Created", total = null)
-        coEvery { mockApiService.register(registerRequest) } returns apiResponse
+        val apiResponse =
+            ApiResponse(success = true, data = fakeUser, message = "Created", total = null)
+        coEvery { mockUserApiService.register(registerRequest) } returns apiResponse
 
         // When
         val result = repository.register(registerRequest)
@@ -100,8 +101,9 @@ class UserRepositoryTest {
     fun `getProfile debe retornar éxito con un UserDto`() = runTest {
         // Given
         val fakeUser = createUserDtoForTest("user-123", "test@example.com")
-        val apiResponse = ApiResponse(success = true, data = fakeUser, message = "Success", total = null)
-        coEvery { mockApiService.getMyProfile() } returns apiResponse
+        val apiResponse =
+            ApiResponse(success = true, data = fakeUser, message = "Success", total = null)
+        coEvery { mockUserApiService.getMyProfile() } returns apiResponse
 
         // When
         val result = repository.getProfile()
@@ -115,7 +117,7 @@ class UserRepositoryTest {
     fun `getProfile con error de API debe retornar fallo`() = runTest {
         // Given
         val exception = Exception("API error")
-        coEvery { mockApiService.getMyProfile() } throws exception
+        coEvery { mockUserApiService.getMyProfile() } throws exception
 
         // When
         val result = repository.getProfile()
