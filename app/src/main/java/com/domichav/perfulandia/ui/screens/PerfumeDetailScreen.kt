@@ -23,6 +23,7 @@ import com.domichav.perfulandia.viewmodel.PerfumeDetailViewModel
 @Composable
 fun PerfumeDetailScreen(
     perfumeId: String,
+    modifier: Modifier = Modifier,
     perfumeDetailViewModel: PerfumeDetailViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -32,73 +33,62 @@ fun PerfumeDetailScreen(
         perfumeDetailViewModel.fetchPerfumeDetails(context, perfumeId)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(uiState.perfume?.nombre ?: "Detalles del Perfume") }
-            )
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                uiState.error != null -> {
-                    Text(
-                        text = "Error: ${uiState.error}",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                uiState.perfume != null -> {
-                    val perfume = uiState.perfume!!
-                    val imageBaseUrl = "https://perfulandia-api-robert.onrender.com/"
-                    val fullImageUrl = imageBaseUrl + perfume.imagen
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+    ) {
+        when {
+            uiState.isLoading -> {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+            uiState.error != null -> {
+                Text(
+                    text = "Error: ${uiState.error}",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+            uiState.perfume != null -> {
+                val perfume = uiState.perfume!!
+                val imageBaseUrl = "https://perfulandia-api-robert.onrender.com/"
+                val fullImageUrl = imageBaseUrl + perfume.imagen
 
-                    Column(
+                Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
+                ) {
+                    AsyncImage(
+                        model = fullImageUrl,
+                        contentDescription = perfume.nombre,
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp)
-                            .verticalScroll(rememberScrollState())
+                            .height(300.dp)
+                            .fillMaxWidth(),
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(id = R.drawable.p1),
+                        error = painterResource(id = R.drawable.p1)
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(perfume.nombre, style = MaterialTheme.typography.headlineMedium)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Marca: ${perfume.marca}", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Género: ${perfume.genero}", style = MaterialTheme.typography.bodyLarge)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Fragancia: ${perfume.fragancia}", style = MaterialTheme.typography.bodyLarge)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Tamaño: ${perfume.tamaño} ml", style = MaterialTheme.typography.bodyLarge)
+                    Spacer(Modifier.height(8.dp))
+                    Text(perfume.descripcion ?: "No hay descripción disponible.", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(16.dp))
+                    Text("$${perfume.precio}", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = { perfumeDetailViewModel.addToCart() },
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        AsyncImage(
-                            model = fullImageUrl,
-                            contentDescription = perfume.nombre,
-                            modifier = Modifier
-                                .height(300.dp)
-                                .fillMaxWidth(),
-                            contentScale = ContentScale.Crop,
-                            placeholder = painterResource(id = R.drawable.p1),
-                            error = painterResource(id = R.drawable.p1)
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        Text(perfume.nombre, style = MaterialTheme.typography.headlineMedium)
-                        Spacer(Modifier.height(8.dp))
-                        Text("Marca: ${perfume.marca}", style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.height(8.dp))
-                        Text("Género: ${perfume.genero}", style = MaterialTheme.typography.bodyLarge)
-                        Spacer(Modifier.height(8.dp))
-                        Text("Categoría: ${perfume.categoria.nombre}", style = MaterialTheme.typography.bodyLarge)
-                        Spacer(Modifier.height(8.dp))
-                        Text("Fragancia: ${perfume.fragancia}", style = MaterialTheme.typography.bodyLarge)
-                        Spacer(Modifier.height(8.dp))
-                        Text("Tamaño: ${perfume.tamaño} ml", style = MaterialTheme.typography.bodyLarge)
-                        Spacer(Modifier.height(8.dp))
-                        Text(perfume.descripcion ?: "No hay descripción disponible.", style = MaterialTheme.typography.bodyMedium)
-                        Spacer(Modifier.height(16.dp))
-                        Text("$${perfume.precio}", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.height(16.dp))
-                        Button(
-                            onClick = { /* TODO: Add to cart logic */ },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Añadir al carrito")
-                        }
+                        Text("Añadir al carrito")
                     }
                 }
             }

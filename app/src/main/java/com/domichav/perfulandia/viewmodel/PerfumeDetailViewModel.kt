@@ -7,6 +7,7 @@ import com.domichav.perfulandia.data.remote.RetrofitClient
 import com.domichav.perfulandia.data.remote.api.PerfumeApiService
 import com.domichav.perfulandia.data.remote.dto.perfume.PerfumeDto
 import com.domichav.perfulandia.data.remote.dto.perfume.PerfumePopulatedDto
+import com.domichav.perfulandia.repository.CartRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,5 +51,28 @@ class PerfumeDetailViewModel : ViewModel() {
                 }
             }
         }
+    }
+
+    fun addToCart() {
+        val populatedPerfume = uiState.value.perfume ?: return
+
+        // Convierte el PerfumePopulatedDto al PerfumeDto que el repositorio espera
+        val simplePerfume = PerfumeDto(
+            id = populatedPerfume.id,
+            nombre = populatedPerfume.nombre,
+            marca = populatedPerfume.marca,
+            descripcion = populatedPerfume.descripcion,
+            precio = populatedPerfume.precio,
+            stock = populatedPerfume.stock,
+            genero = populatedPerfume.genero,
+            tamaño = populatedPerfume.tamaño,
+            fragancia = populatedPerfume.fragancia,
+            categoria = populatedPerfume.categoria.id, // Se usa el ID
+            imagen = populatedPerfume.imagen,
+            imagenThumbnail = populatedPerfume.imagenThumbnail,
+            createdAt = populatedPerfume.createdAt,
+            updatedAt = populatedPerfume.updatedAt
+        )
+        CartRepository.addToCart(simplePerfume)
     }
 }

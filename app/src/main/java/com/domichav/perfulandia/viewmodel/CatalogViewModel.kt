@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.domichav.perfulandia.data.remote.RetrofitClient
 import com.domichav.perfulandia.data.remote.api.PerfumeApiService
 import com.domichav.perfulandia.data.remote.dto.perfume.PerfumeDto
+import com.domichav.perfulandia.repository.CartItem
+import com.domichav.perfulandia.repository.CartRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,6 +37,7 @@ class CatalogViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(CatalogUiState())
     val uiState: StateFlow<CatalogUiState> = _uiState.asStateFlow()
+    val cartItems: StateFlow<List<CartItem>> = CartRepository.cartItems
 
     // Fetches all perfumes from the API
     fun fetchPerfumes(context: Context) {
@@ -145,8 +148,7 @@ class CatalogViewModel : ViewModel() {
     // --- Cart Logic ---
 
     fun addToCart(perfume: PerfumeDto) {
-        // TODO: Implement real add-to-cart logic (e.g., save to a local repository)
-        _uiState.update { it.copy(cartItemCount = it.cartItemCount + 1) }
+        CartRepository.addToCart(perfume)
     }
 }
 

@@ -31,9 +31,11 @@ import com.domichav.perfulandia.viewmodel.CatalogViewModel
 @Composable
 fun CatalogScreen(
     navController: NavController,
+    modifier: Modifier = Modifier,
     catalogViewModel: CatalogViewModel = viewModel()
 ) {
     val uiState by catalogViewModel.uiState.collectAsState()
+    val cartItems by catalogViewModel.cartItems.collectAsState()
     val context = LocalContext.current
     var showFilterMenu by remember { mutableStateOf(false) }
     val generos = mapOf(
@@ -46,87 +48,33 @@ fun CatalogScreen(
     LaunchedEffect(Unit) {
         catalogViewModel.fetchPerfumes(context)
     }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Catálogo") },
-                actions = {
-                    Box {
-                        IconButton(onClick = { showFilterMenu = true }) {
-                            Icon(Icons.Default.FilterList, contentDescription = "Filter")
-                        }
-                        DropdownMenu(
-                            expanded = showFilterMenu,
-                            onDismissRequest = { showFilterMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Todos") },
-                                onClick = {
-                                    showFilterMenu = false
-                                    catalogViewModel.clearFilters()
-                                }
-                            )
-                            generos.forEach { (textoVisible, valorApi) ->
-                                DropdownMenuItem(
-                                    text = { Text(textoVisible) },
-                                    onClick = {
-                                        showFilterMenu = false
-                                        catalogViewModel.applyApiFilters(
-                                            context,
-                                            FilterState(genero = valorApi) // <-- ¡Envía el valor correcto!
-                                        )
-                                    }
-                                )
-                            }
-                        }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+    ) {
+        when {
+            uiState.isLoading -> {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+            uiState.error != null -> {
+                Text(
+                    text = "Error: ${uiState.error}",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+            else -> {
+                PerfumeGrid(
+                    perfumes = uiState.displayedPerfumes,
+                    onAddToCart = { perfume -> catalogViewModel.addToCart(perfume) },
+                    onPerfumeClick = { perfumeId -> navController.navigate("perfumeDetail/$perfumeId")
                     }
-                    BadgedBox(
-                        badge = {
-                            if (uiState.cartItemCount > 0) {
-                                Badge { Text("${uiState.cartItemCount}") }
-                            }
-                        }
-                    ) {
-                        IconButton(onClick = { /* TODO: Navigate to cart screen */ }) {
-                            Icon(Icons.Default.ShoppingCart, contentDescription = "Shopping Cart")
-                        }
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                uiState.error != null -> {
-                    Text(
-                        text = "Error: ${uiState.error}",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                else -> {
-                    PerfumeGrid(
-                        perfumes = uiState.displayedPerfumes,
-                        onAddToCart = { perfume ->
-                            catalogViewModel.addToCart(perfume)
-                        },
-                        onPerfumeClick = { perfumeId ->
-                            navController.navigate("perfumeDetail/$perfumeId")
-                        }
-                    )
-                }
+                )
             }
         }
     }
 }
+
 
 @Composable
 fun PerfumeGrid(
