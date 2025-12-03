@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -51,6 +52,7 @@ import com.domichav.perfulandia.viewmodel.ProfileViewModelFactory
 fun MainScaffold(
     navController: NavController,
     title: String, // Título dinámico para la TopAppBar
+    actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit // El contenido de la pantalla actual
 ) {
     // Usaremos el mismo ViewModel para obtener el estado del carrito
@@ -70,6 +72,7 @@ fun MainScaffold(
                     }
                 },
                 actions = {
+                    actions()
                     // El mismo BadgedBox que ya funciona
                     BadgedBox(
                         badge = {
@@ -125,12 +128,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("catalog") {
-                        MainScaffold(navController = navController, title = "Catálogo") { paddingValues ->
-                            CatalogScreen(
-                                navController = navController,
-                                modifier = Modifier.padding(paddingValues) // Le pasamos el padding
-                            )
-                        }
+                        CatalogScreen(navController = navController)
                     }
 
                     composable("cart") {

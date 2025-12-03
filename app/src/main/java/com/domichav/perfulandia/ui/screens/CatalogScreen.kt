@@ -3,6 +3,7 @@ package com.domichav.perfulandia.ui.screens
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.domichav.perfulandia.MainScaffold
 import com.domichav.perfulandia.R
 import com.domichav.perfulandia.data.remote.dto.perfume.PerfumeDto
 import com.domichav.perfulandia.viewmodel.FilterState
@@ -44,32 +46,63 @@ fun CatalogScreen(
         "Unisex" to "unisex"
     )
 
-
     LaunchedEffect(Unit) {
         catalogViewModel.fetchPerfumes(context)
     }
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-    ) {
-        when {
-            uiState.isLoading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+
+    val topBarActions: @Composable RowScope.() -> Unit = {
+        Box {
+            IconButton(onClick = { showFilterMenu = true }) {
+                Icon(Icons.Default.FilterList, contentDescription = "Filtrar Perfumes")
             }
-            uiState.error != null -> {
-                Text(
-                    text = "Error: ${uiState.error}",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-            else -> {
-                PerfumeGrid(
-                    perfumes = uiState.displayedPerfumes,
-                    onAddToCart = { perfume -> catalogViewModel.addToCart(perfume) },
-                    onPerfumeClick = { perfumeId -> navController.navigate("perfumeDetail/$perfumeId")
+            DropdownMenu(
+                expanded = showFilterMenu,
+                onDismissRequest = { showFilterMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Todos") },
+                    onClick = {
+                        showFilterMenu = false
+                        catalogViewModel.clearFilters() // Usamos la función para limpiar
                     }
                 )
+                generos.forEach { (textoVisible, valorApi) ->
+                    DropdownMenuItem(
+                        text = { Text(textoVisible) },
+                        onClick = {
+                            showFilterMenu = false
+                            catalogViewModel.applyApiFilters(
+                                context,
+                                FilterState(genero = valorApi)
+                            )
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    MainScaffold(
+        navController = navController,
+        title = "Catálogo",
+        actions = topBarActions // <-- Inyectamos nuestro menú de filtros
+    ) { paddingValues ->
+        // El contenido de la pantalla se mantiene igual que antes
+        Box(
+            modifier = Modifier
+                .padding(paddingValues) // Aplicamos el padding del MainScaffold
+                .fillMaxSize()
+        ) {
+            when {
+                uiState.isLoading -> { /* ... */ }
+                uiState.error != null -> { /* ... */ }
+                else -> {
+                    PerfumeGrid(
+                        perfumes = uiState.displayedPerfumes,
+                        onAddToCart = { perfume -> catalogViewModel.addToCart(perfume) },
+                        onPerfumeClick = { perfumeId -> navController.navigate("perfumeDetail/$perfumeId") }
+                    )
+                }
             }
         }
     }
@@ -103,7 +136,7 @@ fun PerfumeGrid(
 
 @Composable
 fun PerfumeItemCard(perfume: PerfumeDto, onAddToCart: (PerfumeDto) -> Unit, onPerfumeClick: () -> Unit) {
-    val imageBaseUrl = "https://perfulandia-api-robert.onrender.com/"
+    val imageBaseUrl = "https://perfulandia-api-robert.onrender.com/api/"
     val fullImageUrl = imageBaseUrl + perfume.imagen
     Log.d("ImageDebug", "Loading image for ${perfume.nombre}: $fullImageUrl")
 
