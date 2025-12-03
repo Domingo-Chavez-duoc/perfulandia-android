@@ -2,6 +2,7 @@ package com.domichav.perfulandia.data.remote.api
 
 import com.domichav.perfulandia.data.remote.dto.perfume.CreatePerfumeRequest
 import com.domichav.perfulandia.data.remote.dto.perfume.PerfumeDto
+import com.domichav.perfulandia.data.remote.dto.perfume.PerfumePopulatedDto
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -20,7 +21,7 @@ interface PerfumeApiService {
     suspend fun getPerfumes(): ApiResponse<List<PerfumeDto>>
 
     @GET("perfume/{id}")
-    suspend fun getPerfumeById(@Path("id") perfumeId: String): ApiResponse<PerfumeDto>
+    suspend fun getPerfumeById(@Path("id") perfumeId: String): ApiResponse<PerfumePopulatedDto>
 
     @POST("perfume")
     suspend fun createPerfume(@Body createRequest: CreatePerfumeRequest): ApiResponse<PerfumeDto>
@@ -41,10 +42,9 @@ interface PerfumeApiService {
     suspend fun filterPerfumes(
         @Query("genero") genero: String? = null,
         @Query("fragancia") fragancia: String? = null,
-        @Query("tamaño") tamaño: String? = null,
         @Query("precioMin") precioMin: Double? = null,
         @Query("precioMax") precioMax: Double? = null
-    ): ApiResponse<List<PerfumeDto>>
+    ): ApiResponse<List<PerfumePopulatedDto>>
 
     @Multipart
     @POST("perfume/{id}/upload-image")

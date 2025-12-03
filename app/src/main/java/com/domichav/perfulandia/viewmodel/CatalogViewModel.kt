@@ -106,8 +106,27 @@ class CatalogViewModel : ViewModel() {
                     precioMax = filters.precioMax
                 )
                 if (response.success && response.data != null) {
+
+                    val convertedList = response.data.map { populatedPerfume ->
+                        PerfumeDto(
+                            id = populatedPerfume.id,
+                            nombre = populatedPerfume.nombre,
+                            marca = populatedPerfume.marca,
+                            descripcion = populatedPerfume.descripcion,
+                            precio = populatedPerfume.precio,
+                            stock = populatedPerfume.stock,
+                            genero = populatedPerfume.genero,
+                            tamaño = populatedPerfume.tamaño,
+                            fragancia = populatedPerfume.fragancia,
+                            categoria = populatedPerfume.categoria.id, // <-- ¡Usamos el ID del objeto!
+                            imagen = populatedPerfume.imagen,
+                            imagenThumbnail = populatedPerfume.imagenThumbnail,
+                            createdAt = populatedPerfume.createdAt,
+                            updatedAt = populatedPerfume.updatedAt
+                        )
+                    }
                     _uiState.update {
-                        it.copy(isLoading = false, displayedPerfumes = response.data)
+                        it.copy(isLoading = false, displayedPerfumes = convertedList)
                     }
                 } else {
                     _uiState.update {

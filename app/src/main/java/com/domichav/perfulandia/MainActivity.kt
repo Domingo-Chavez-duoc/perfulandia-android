@@ -5,11 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.domichav.perfulandia.ui.screens.HomeScreen
 import com.domichav.perfulandia.ui.screens.LoginScreen
+import com.domichav.perfulandia.ui.screens.PerfumeDetailScreen
 import com.domichav.perfulandia.ui.screens.ProfileScreen
 import com.domichav.perfulandia.ui.screens.RegisterScreen
 import com.domichav.perfulandia.ui.screens.CatalogScreen
@@ -55,6 +58,16 @@ class MainActivity : ComponentActivity() {
 
                     composable("catalog") { // Use "catalog" in English
                         CatalogScreen(navController)
+                    }
+
+                    composable(
+                        "perfumeDetail/{perfumeId}",
+                        arguments = listOf(navArgument("perfumeId") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val perfumeId = backStackEntry.arguments?.getString("perfumeId")
+                        if (perfumeId != null) {
+                            PerfumeDetailScreen(perfumeId = perfumeId)
+                        }
                     }
                 }
             }
