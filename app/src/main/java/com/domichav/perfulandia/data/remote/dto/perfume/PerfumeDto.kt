@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 import java.util.Date
 
 data class PerfumeDto(
-    @SerializedName("_id") // En NestJS/MongoDB se usa _id
+    @SerializedName("_id")
     val id: String,
 
     @SerializedName("nombre")
@@ -26,13 +26,13 @@ data class PerfumeDto(
     val genero: String,
 
     @SerializedName("tamaño")
-    val tamaño: String,
+    val tamaño: Int,
 
     @SerializedName("fragancia")
     val fragancia: String,
 
-    @SerializedName("categoriaId")
-    val categoriaId: String,
+    @SerializedName("categoria")
+    val categoria: String,
 
     @SerializedName("imagen")
     val imagen: String?,

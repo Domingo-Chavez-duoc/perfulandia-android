@@ -69,6 +69,16 @@ class CatalogViewModel : ViewModel() {
 
     // --- Filter Logic ---
 
+    // NEW FUNCTION: Clears filters by restoring the original list, avoiding a network call.
+    fun clearFilters() {
+        _uiState.update {
+            it.copy(
+                displayedPerfumes = it.allPerfumes, // Reset displayed list from the full list
+                filters = FilterState() // Reset filter state
+            )
+        }
+    }
+
     fun onFilterDialogDismiss() {
         _uiState.update { it.copy(showFilterDialog = false) }
     }
@@ -79,6 +89,12 @@ class CatalogViewModel : ViewModel() {
 
     // Calls the API endpoint with the selected filters
     fun applyApiFilters(context: Context, filters: FilterState) {
+        // If the filter is "All", use the new clearFilters function instead of an API call
+        if (filters.genero == null && filters.fragancia == null && filters.precioMin == null && filters.precioMax == null) {
+            clearFilters()
+            return // Exit the function early
+        }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null, showFilterDialog = false) }
             try {
@@ -95,7 +111,8 @@ class CatalogViewModel : ViewModel() {
                     }
                 } else {
                     _uiState.update {
-                        it.copy(isLoading = false, error = response.message ?: "Failed to apply filters")
+                        // In case of a failed filter, display an empty list instead of old results
+                        it.copy(isLoading = false, displayedPerfumes = emptyList(), error = response.message ?: "Failed to apply filters")
                     }
                 }
             } catch (e: Exception) {
@@ -113,3 +130,4 @@ class CatalogViewModel : ViewModel() {
         _uiState.update { it.copy(cartItemCount = it.cartItemCount + 1) }
     }
 }
+

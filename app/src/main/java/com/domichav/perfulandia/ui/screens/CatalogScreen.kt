@@ -1,5 +1,6 @@
 package com.domichav.perfulandia.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -9,6 +10,8 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -21,7 +24,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.domichav.perfulandia.R
 import com.domichav.perfulandia.data.remote.dto.perfume.PerfumeDto
-import com.domichav.perfulandia.ui.components.FilterDialog
+import com.domichav.perfulandia.viewmodel.FilterState
 import com.domichav.perfulandia.ui.theme.ButtonColor
 import com.domichav.perfulandia.viewmodel.CatalogViewModel
 
@@ -33,20 +36,12 @@ fun CatalogScreen(
 ) {
     val uiState by catalogViewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var showFilterMenu by remember { mutableStateOf(false) }
+    val generos = listOf("Masculino", "Femenino", "Unisex")
 
     // Fetches perfumes the first time the screen is composed
     LaunchedEffect(Unit) {
         catalogViewModel.fetchPerfumes(context)
-    }
-
-    // Shows the filter dialog when the state in the ViewModel changes
-    if (uiState.showFilterDialog) {
-        FilterDialog(
-            onDismissRequest = { catalogViewModel.onFilterDialogDismiss() },
-            onApplyFilters = { filters ->
-                catalogViewModel.applyApiFilters(context, filters)
-            }
-        )
     }
 
     Scaffold(
@@ -54,9 +49,39 @@ fun CatalogScreen(
             TopAppBar(
                 title = { Text("Catálogo") },
                 actions = {
-                    // Filter button that now works
-                    IconButton(onClick = { catalogViewModel.onFilterDialogOpen() }) {
-                        Icon(Icons.Default.FilterList, contentDescription = "Filter")
+                    Box {
+                        // Filter button that now works
+                        IconButton(onClick = { showFilterMenu = true }) {
+                            Icon(Icons.Default.FilterList, contentDescription = "Filter")
+                        }
+                        DropdownMenu(
+                            expanded = showFilterMenu,
+                            onDismissRequest = { showFilterMenu = false }
+                        ) {
+                            // "All" option to reset filters
+                            DropdownMenuItem(
+                                text = { Text("All") },
+                                onClick = {
+                                    showFilterMenu = false
+                                    // Use the new, more efficient clearFilters function
+                                    catalogViewModel.clearFilters()
+                                }
+                            )
+                            // Loop through gender options
+                            generos.forEach { selectionOption ->
+                                DropdownMenuItem(
+                                    text = { Text(selectionOption) },
+                                    onClick = {
+                                        showFilterMenu = false
+                                        // Apply the selected gender filter
+                                        catalogViewModel.applyApiFilters(
+                                            context,
+                                            FilterState(genero = selectionOption, fragancia = null)
+                                        )
+                                    }
+                                )
+                            }
+                        }
                     }
                     // Shopping cart button
                     BadgedBox(
@@ -91,7 +116,7 @@ fun CatalogScreen(
                     )
                 }
                 else -> {
-                    // The grid now displays 'displayedPerfumes'
+                    // This now correctly shows the filtered (or cleared) list
                     PerfumeGrid(
                         perfumes = uiState.displayedPerfumes,
                         onAddToCart = { perfume ->
@@ -106,15 +131,25 @@ fun CatalogScreen(
 
 @Composable
 fun PerfumeGrid(perfumes: List<PerfumeDto>, onAddToCart: (PerfumeDto) -> Unit) {
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 160.dp),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(perfumes) { perfume ->
-            PerfumeItemCard(perfume = perfume, onAddToCart = onAddToCart)
+    // Add a check for an empty list to show a message to the user
+    if (perfumes.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("No perfumes found.")
+        }
+    } else {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 160.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(perfumes) { perfume ->
+                PerfumeItemCard(perfume = perfume, onAddToCart = onAddToCart)
+            }
         }
     }
 }
@@ -122,13 +157,18 @@ fun PerfumeGrid(perfumes: List<PerfumeDto>, onAddToCart: (PerfumeDto) -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PerfumeItemCard(perfume: PerfumeDto, onAddToCart: (PerfumeDto) -> Unit) {
+    val imageBaseUrl = "https://perfulandia-api-robert.onrender.com/"
+    val fullImageUrl = imageBaseUrl + perfume.imagen
+    // DEBUG LOG: Print the URL being passed to Coil
+    Log.d("ImageDebug", "Loading image for ${perfume.nombre}: $fullImageUrl")
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         onClick = { /* TODO: Navigate to perfume detail screen */ }
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             AsyncImage(
-                model = perfume.imagen,
+                model = fullImageUrl,
                 contentDescription = perfume.nombre,
                 modifier = Modifier
                     .height(180.dp)
