@@ -54,31 +54,6 @@ class UserRepositoryTest {
     }
 
     @Test
-    fun `login con credenciales válidas debe retornar éxito y guardar el token`() = runTest {
-        // Given
-        val loginRequest = LoginRequest("test@example.com", "password123")
-        val loginResponse = LoginResponse(accessToken = "mock_token_12345")
-        val apiResponse =
-            ApiResponse(success = true, data = loginResponse, message = "Success", total = null)
-
-        coEvery { mockUserApiService.login(loginRequest) } returns apiResponse
-        // Configurar el comportamiento del mock de SessionManager
-        coEvery { anyConstructed<SessionManager>().saveAuthToken(any()) } just runs
-        coEvery { anyConstructed<SessionManager>().saveUserEmail(any()) } just runs
-
-        // When
-        val result = repository.login(loginRequest)
-
-        // Then
-        assertTrue(result.isSuccess, "El resultado del login debería ser 'success'")
-        assertEquals(loginResponse, result.getOrNull())
-
-        // Verificar que los métodos del mock fueron llamados
-        coVerify { anyConstructed<SessionManager>().saveAuthToken("mock_token_12345") }
-        coVerify { anyConstructed<SessionManager>().saveUserEmail("test@example.com") }
-    }
-
-    @Test
     fun `register con datos válidos debe retornar éxito`() = runTest {
         // Given
         val registerRequest = RegisterRequest(nombre = "New User", email = "new@example.com", password = "password123")

@@ -41,9 +41,9 @@ class UserRepository(private val context: Context) {
                 return Result.failure(Exception("No data returned from login API"))
             }
 
-            val token = loginData.accessToken
+            val token = loginData.accessToken ?:""
 
-            if (token.isEmpty()) {
+            if (token.isNullOrEmpty()) {
                 Log.w(TAG, "login: no token in response; response=$loginData")
                 return Result.failure(Exception("No auth token returned from login API"))
             }
