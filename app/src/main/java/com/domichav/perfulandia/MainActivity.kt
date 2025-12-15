@@ -34,6 +34,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.domichav.perfulandia.ui.screens.CartScreen
+import com.domichav.perfulandia.ui.screens.CheckoutScreen
 import com.domichav.perfulandia.ui.screens.HomeScreen
 import com.domichav.perfulandia.ui.screens.LoginScreen
 import com.domichav.perfulandia.ui.screens.PerfumeDetailScreen
@@ -132,12 +133,13 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("cart") {
-                        MainScaffold(navController = navController, title = "Mi Carrito") { paddingValues ->
-                            CartScreen(
+                         CartScreen(
                                 navController = navController,
-                                modifier = Modifier.padding(paddingValues) // Le pasamos el padding
+                                modifier = Modifier // Le pasamos el padding
                             )
-                        }
+                    }
+                    composable("checkout") {
+                        CheckoutScreen(navController = navController)
                     }
 
                     composable(

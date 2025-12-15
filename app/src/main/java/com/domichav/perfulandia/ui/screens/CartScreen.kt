@@ -39,13 +39,15 @@ fun CartScreen(
         },
         bottomBar = {
             if (uiState.cartItems.isNotEmpty()) {
-                BottomAppBar(
-                    modifier = Modifier.height(120.dp)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shadowElevation = 8.dp
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -54,9 +56,8 @@ fun CartScreen(
                             Text("Total (${uiState.totalItemCount} items):", style = MaterialTheme.typography.titleLarge)
                             Text(String.format("$%.2f", uiState.totalPrice), style = MaterialTheme.typography.titleLarge)
                         }
-                        Spacer(Modifier.height(12.dp))
                         Button(
-                            onClick = { /* TODO: Implement checkout */ },
+                            onClick = { navController.navigate("checkout") },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("Finalizar Compra")
