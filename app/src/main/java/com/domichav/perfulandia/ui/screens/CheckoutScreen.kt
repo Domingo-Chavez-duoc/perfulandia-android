@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -34,7 +35,11 @@ fun CheckoutScreen(
                         navController.navigate("catalog") { // Asume que "catalog" es la ruta de tu pantalla de catálogo
                             popUpTo("cart") { inclusive = true } // Limpia el backstack hasta el carrito
                         }
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Black,
+                        contentColor = Color.White
+                    )
                 ) {
                     Text("Aceptar")
                 }
@@ -120,7 +125,11 @@ fun CheckoutScreen(
                     Button(
                         onClick = { checkoutViewModel.placeOrder() },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = uiState.name.isNotBlank() && uiState.address.isNotBlank()
+                        enabled = uiState.name.isNotBlank() && uiState.address.isNotBlank(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black,
+                            contentColor = Color.White
+                        )
                     ) {
                         Text("Realizar Pedido")
                     }
