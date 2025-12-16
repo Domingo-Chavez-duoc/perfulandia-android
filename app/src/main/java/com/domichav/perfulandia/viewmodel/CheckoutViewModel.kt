@@ -71,4 +71,8 @@ class CheckoutViewModel(
             cartRepository.clearCart()
         }
     }
+
+    fun onOrderPlacedShown() {
+        _uiState.update { it.copy(isOrderPlaced = false) }
+    }
 }

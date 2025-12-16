@@ -24,12 +24,22 @@ fun CheckoutScreen(
     val uiState by checkoutViewModel.uiState.collectAsState()
 
     if (uiState.isOrderPlaced) {
-        // Navegar a una pantalla de confirmación o de vuelta al catálogo
-        LaunchedEffect(Unit) {
-            navController.navigate("catalog") { // Asume que "catalog" es la ruta de tu pantalla de catálogo
-                popUpTo("cart") { inclusive = true } // Limpia el backstack hasta el carrito
+        AlertDialog(
+            onDismissRequest = { checkoutViewModel.onOrderPlacedShown() },
+            title = { Text("Compra realizada con éxito") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        checkoutViewModel.onOrderPlacedShown()
+                        navController.navigate("catalog") { // Asume que "catalog" es la ruta de tu pantalla de catálogo
+                            popUpTo("cart") { inclusive = true } // Limpia el backstack hasta el carrito
+                        }
+                    }
+                ) {
+                    Text("Aceptar")
+                }
             }
-        }
+        )
     }
 
     Scaffold(
